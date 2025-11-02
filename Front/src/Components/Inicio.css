@@ -1,0 +1,249 @@
+/* Main.css */
+
+.main {
+  min-height: calc(100vh - 200px);
+  background-color: #f5f5f5;
+  padding: 2rem;
+}
+
+/* Hero Section */
+.hero {
+  background: linear-gradient(135deg, #2d5a6d 0%, #4a7c8f 100%);
+  border-radius: 20px;
+  padding: 4rem 3rem;
+  margin-bottom: 3rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.hero-content {
+  max-width: 900px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.hero-title {
+  font-size: 2.75rem;
+  font-weight: 700;
+  color: white;
+  margin: 0 0 1.5rem 0;
+  line-height: 1.2;
+}
+
+.hero-description {
+  font-size: 1.125rem;
+  color: rgba(255, 255, 255, 0.95);
+  line-height: 1.7;
+  margin: 0 0 2rem 0;
+  max-width: 750px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.hero-button {
+  background-color: #C8E86B;
+  color: #2d5a6d;
+  padding: 1rem 2.5rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(200, 232, 107, 0.3);
+}
+
+.hero-button:hover {
+  background-color: #b8d85b;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(200, 232, 107, 0.4);
+}
+
+.hero-button:active {
+  transform: translateY(0);
+}
+
+/* Features Section */
+.features {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+}
+
+.feature-card {
+  background-color: white;
+  border-radius: 16px;
+  padding: 2.5rem 2rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  border-left: 4px solid transparent;
+  position: relative;
+  overflow: hidden;
+}
+
+.feature-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.card-green::before {
+  background-color: #7ED957;
+}
+
+.card-blue::before {
+  background-color: #00B4D8;
+}
+
+.card-purple::before {
+  background-color: #9370DB;
+}
+
+.feature-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+}
+
+.card-green:hover::before {
+  width: 100%;
+  opacity: 0.05;
+}
+
+.card-blue:hover::before {
+  width: 100%;
+  opacity: 0.05;
+}
+
+.card-purple:hover::before {
+  width: 100%;
+  opacity: 0.05;
+}
+
+.feature-icon {
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  margin-bottom: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.card-green .feature-icon {
+  background-color: rgba(126, 217, 87, 0.1);
+  color: #7ED957;
+}
+
+.card-blue .feature-icon {
+  background-color: rgba(0, 180, 216, 0.1);
+  color: #00B4D8;
+}
+
+.card-purple .feature-icon {
+  background-color: rgba(147, 112, 219, 0.1);
+  color: #9370DB;
+}
+
+.feature-card:hover .feature-icon {
+  transform: scale(1.1) rotate(5deg);
+}
+
+.feature-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2d5a6d;
+  margin: 0 0 1rem 0;
+}
+
+.feature-description {
+  font-size: 1rem;
+  color: #666;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .features {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .feature-card:last-child {
+    grid-column: 1 / -1;
+    max-width: 600px;
+    margin: 0 auto;
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .main {
+    padding: 1rem;
+  }
+  
+  .hero {
+    padding: 3rem 2rem;
+    border-radius: 16px;
+  }
+  
+  .hero-title {
+    font-size: 2rem;
+  }
+  
+  .hero-description {
+    font-size: 1rem;
+  }
+  
+  .hero-button {
+    padding: 0.875rem 2rem;
+    font-size: 1rem;
+  }
+  
+  .features {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .feature-card:last-child {
+    grid-column: 1;
+    max-width: 100%;
+  }
+  
+  .feature-card {
+    padding: 2rem 1.5rem;
+  }
+  
+  .feature-icon {
+    width: 70px;
+    height: 70px;
+  }
+  
+  .feature-icon svg {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .feature-title {
+    font-size: 1.3rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero {
+    padding: 2.5rem 1.5rem;
+  }
+  
+  .hero-title {
+    font-size: 1.75rem;
+  }
+  
+  .hero-description {
+    font-size: 0.95rem;
+  }
+}
