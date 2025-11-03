@@ -3,11 +3,10 @@ import '../../Components/Inicio.css';
 import Header from '../Header-footer/Header.jsx';
 import Footer from '../Header-footer/Footer.jsx';
 
-
 const Main = () => {
   return (
     <>
-    <Header />
+    
     <main className="main">
       {/* Hero Section */}
       <section className="hero">
@@ -71,7 +70,7 @@ const Main = () => {
         </div>
       </section>
     </main>
-    <Footer />
+    
     </>
   );
 };
