@@ -403,3 +403,81 @@
     font-size: 1.75rem;
   }
 }
+/* Estados de error y loading */
+.error-state-productos {
+  text-align: center;
+  padding: 40px;
+  color: #dc3545;
+}
+
+.retry-btn {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.retry-btn:hover {
+  background: #c82333;
+}
+
+/* Información del emprendimiento */
+.producto-emprendimiento {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.emprendimiento-nombre {
+  font-weight: 600;
+  color: #333;
+  font-size: 0.9em;
+}
+
+.emprendimiento-categoria {
+  background: #e3f2fd;
+  color: #1976d2;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.75em;
+  font-weight: 500;
+}
+
+/* Vendedor */
+.producto-vendedor {
+  color: #666;
+  font-size: 0.85em;
+  margin-bottom: 12px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .producto-emprendimiento {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+  
+  .emprendimiento-categoria {
+    align-self: flex-start;
+  }
+}
+.favoritos-link {
+  margin-left: 10px;
+  font-size: 0.9em;
+}
+
+.favoritos-link a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.favoritos-link a:hover {
+  text-decoration: underline;
+}

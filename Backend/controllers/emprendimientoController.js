@@ -191,3 +191,46 @@ export const actualizarEstadoEmprendimiento = async (req, res) => {
     });
   }
 };
+export const obtenerEmprendedores = async (req, res) => {
+  try {
+    console.log('Obteniendo lista de emprendedores...');
+
+    const { data: emprendimientos, error } = await supabase
+      .from('emprendimiento')
+      .select(`
+        *,
+        usuario:idusuario (
+          nombres,
+          apellidos,
+          correo,
+          telefono,
+          carrera:idcarrera (nombre)
+        ),
+        categoria:idcategoria (
+          nombre
+        )
+      `)
+      .eq('estado', 'aprobado')
+      .order('fecharegistro', { ascending: false });
+
+    if (error) {
+      console.log('Error al obtener emprendedores:', error);
+      throw error;
+    }
+
+    console.log(`Encontrados ${emprendimientos.length} emprendimientos aprobados`);
+
+    res.json({
+      success: true,
+      data: emprendimientos
+    });
+
+  } catch (error) {
+    console.error('Error en obtener emprendedores:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor',
+      error: error.message
+    });
+  }
+};
