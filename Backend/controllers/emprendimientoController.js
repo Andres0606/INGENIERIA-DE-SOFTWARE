@@ -139,3 +139,55 @@ export const obtenerTodosEmprendimientos = async (req, res) => {
     });
   }
 };
+// Actualizar estado de emprendimiento
+export const actualizarEstadoEmprendimiento = async (req, res) => {
+  try {
+    const { idemprendimiento } = req.params;
+    const { estado, motivo } = req.body;
+
+    console.log('Actualizando estado:', { idemprendimiento, estado, motivo });
+
+    // Validaciones
+    if (!estado || !['pendiente', 'aprobado', 'rechazado'].includes(estado)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Estado inválido. Debe ser: pendiente, aprobado o rechazado'
+      });
+    }
+
+    // Actualizar estado
+    const { data: emprendimientoActualizado, error } = await supabase
+      .from('emprendimiento')
+      .update({ estado })
+      .eq('idemprendimiento', idemprendimiento)
+      .select('*');
+
+    if (error) {
+      console.log('Error al actualizar estado:', error);
+      throw error;
+    }
+
+    if (!emprendimientoActualizado || emprendimientoActualizado.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Emprendimiento no encontrado'
+      });
+    }
+
+    console.log('Estado actualizado exitosamente:', emprendimientoActualizado[0]);
+
+    res.json({
+      success: true,
+      message: `Emprendimiento ${estado} exitosamente`,
+      data: emprendimientoActualizado[0]
+    });
+
+  } catch (error) {
+    console.error('Error en actualizar estado:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor',
+      error: error.message
+    });
+  }
+};

@@ -50,6 +50,9 @@ const Header = () => {
 
   // Verificar si el usuario es emprendedor (idtipousuario = 2)
   const isEmprendedor = userData && userData.idtipousuario === 2;
+  
+  // Verificar si el usuario es administrador (idtipousuario = 1)
+  const isAdmin = userData && userData.idtipousuario === 1;
 
   return (
     <header className="header">
@@ -72,8 +75,15 @@ const Header = () => {
         {/* Auth Buttons - MEJORADO */}
         <div className="auth-buttons">
           {isLoggedIn ? (
-            // ✅ Usuario LOGUEADO - Mostrar Mis Emprendimientos, Perfil y Cerrar Sesión
+            // ✅ Usuario LOGUEADO 
             <>
+              {/* Botón "Emprendimientos" solo para administradores */}
+              {isAdmin && (
+                <Link to="/admin/emprendimientos" className="btn-admin">
+                  📊 Emprendimientos
+                </Link>
+              )}
+              
               {/* Botón "Mis Emprendimientos" solo para emprendedores */}
               {isEmprendedor && (
                 <Link to="/mis-emprendimientos" className="btn-emprendimientos">

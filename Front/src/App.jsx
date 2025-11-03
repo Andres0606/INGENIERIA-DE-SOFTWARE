@@ -13,6 +13,7 @@ import Login from "./App/Login/Login"; // ✅ login
 import Register from "./App/Login/Register"; // ✅ registro
 import Profile from "./App/Interfaces/Profile"; // ✅ perfil
 import MisEmprendimientos from "./App/Interfaces/MisEmprendimientos";
+import AdminEmprendimientos from "./App/Interfaces/AdminEmprendimientos";
 function App() {
   return (
     <BrowserRouter>
@@ -27,6 +28,7 @@ function App() {
         <Route path="/register" element={<Register />} /> {/* ✅ Registro */}
         <Route path="/perfil" element={<Profile />} />
         <Route path="/mis-emprendimientos" element={<MisEmprendimientos />} />
+        <Route path="/admin/emprendimientos" element={<AdminEmprendimientos />} />
       </Routes>
      
     </BrowserRouter>
