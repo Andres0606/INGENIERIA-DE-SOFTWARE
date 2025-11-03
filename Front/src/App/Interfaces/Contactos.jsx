@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import '../../Components/Contactos.css';
+import Header from '../Header-footer/Header.jsx';
+import Footer from '../Header-footer/Footer.jsx';
 
 const Contacto = () => {
   const [formData, setFormData] = useState({
@@ -80,6 +82,8 @@ const Contacto = () => {
   };
 
   return (
+    <>
+    <Header></Header>
     <div className="contacto-page">
       {/* Header */}
       <section className="contacto-header">
@@ -300,6 +304,8 @@ const Contacto = () => {
         </div>
       </section>
     </div>
+    <Footer></Footer>
+    </>
   );
 };
 

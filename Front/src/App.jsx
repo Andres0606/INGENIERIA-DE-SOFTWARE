@@ -16,7 +16,7 @@ import Profile from "./App/Interfaces/Profile"; // ✅ perfil
 function App() {
   return (
     <BrowserRouter>
-      <Header />
+     
       <Routes>
         <Route path="/" element={<Inicio />} />
         <Route path="/emprendedores" element={<Emprendedores />} />
@@ -27,7 +27,7 @@ function App() {
         <Route path="/register" element={<Register />} /> {/* ✅ Registro */}
         <Route path="/perfil" element={<Profile />} />
       </Routes>
-      <Footer />
+     
     </BrowserRouter>
   );
 }

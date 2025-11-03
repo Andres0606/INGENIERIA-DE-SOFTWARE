@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import '../../Components/Productos.css';
-
+import Header from '../Header-footer/Header.jsx';
+import Footer from '../Header-footer/Footer.jsx';
 const Productos = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Todos');
@@ -141,6 +142,8 @@ const Productos = () => {
   };
 
   return (
+    <>
+    <Header></Header>
     <div className="productos-page">
       {/* Header Section */}
       <section className="productos-header">
@@ -253,6 +256,8 @@ const Productos = () => {
         </div>
       </section>
     </div>
+    <Footer></Footer>
+    </>
   );
 };
 

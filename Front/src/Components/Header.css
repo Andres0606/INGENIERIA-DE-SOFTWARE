@@ -176,3 +176,58 @@
     font-size: 0.85rem;
   }
 }
+/* Estilos existentes... */
+
+.auth-buttons {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Botón de Perfil */
+.btn-profile {
+  background: #4ecdc4;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.3s ease;
+}
+
+.btn-profile:hover {
+  background: #3db8af;
+}
+
+.user-name {
+  font-size: 0.9em;
+  opacity: 0.9;
+}
+
+/* Botón de Cerrar Sesión */
+.btn-logout {
+  background: #ff6b6b;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.btn-logout:hover {
+  background: #ff5252;
+}
+
+/* Botones normales (mantener tus estilos actuales) */
+.btn-login {
+  /* Tus estilos actuales */
+}
+
+.btn-register {
+  /* Tus estilos actuales */
+}

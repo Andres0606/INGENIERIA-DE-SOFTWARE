@@ -6,7 +6,7 @@ import Footer from '../Header-footer/Footer.jsx';
 const Main = () => {
   return (
     <>
-    
+    <Header></Header>
     <main className="main">
       {/* Hero Section */}
       <section className="hero">
@@ -70,7 +70,7 @@ const Main = () => {
         </div>
       </section>
     </main>
-    
+    <Footer></Footer>
     </>
   );
 };

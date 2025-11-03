@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import '../../Components/Emprendedores.css';
-
+import Header from '../Header-footer/Header.jsx';
+import Footer from '../Header-footer/Footer.jsx';
 
 const Emprendedores = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -118,7 +119,7 @@ const Emprendedores = () => {
 
   return (
     <>
-   
+   <Header></Header>
     <div className="emprendedores-page">
       {/* Header Section */}
       <section className="emprendedores-header">
@@ -215,7 +216,7 @@ const Emprendedores = () => {
         </div>
       </section>
     </div>
-   
+   <Footer></Footer>
     </>
   );
 };

@@ -1,9 +1,52 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import '../../Components/Header.css';
 
 const Header = () => {
   const [searchValue, setSearchValue] = useState('');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userData, setUserData] = useState(null);
+  const navigate = useNavigate();
+
+  // Verificar si el usuario está logueado
+  useEffect(() => {
+    const checkAuth = () => {
+      const loggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
+      const user = sessionStorage.getItem('userData');
+      
+      setIsLoggedIn(loggedIn);
+      if (user) {
+        setUserData(JSON.parse(user));
+      }
+    };
+
+    checkAuth();
+    
+    // Escuchar cambios en el storage
+    window.addEventListener('storage', checkAuth);
+    
+    return () => {
+      window.removeEventListener('storage', checkAuth);
+    };
+  }, []);
+
+  const handleLogout = () => {
+    // Limpiar sessionStorage
+    sessionStorage.removeItem('isLoggedIn');
+    sessionStorage.removeItem('userData');
+    sessionStorage.removeItem('userToken');
+    sessionStorage.removeItem('userEmail');
+    
+    // Limpiar estados
+    setIsLoggedIn(false);
+    setUserData(null);
+    
+    // Redirigir al inicio
+    navigate('/');
+    
+    // Recargar para actualizar el header
+    window.location.reload();
+  };
 
   return (
     <header className="header">
@@ -23,11 +66,34 @@ const Header = () => {
           <Link to="/contactos" className="nav-link">Contactos</Link>
         </nav>
 
-        {/* Auth Buttons */}
+        {/* Auth Buttons - CAMBIADO */}
         <div className="auth-buttons">
-          <Link to="/login" className="btn-login">Iniciar Sesión</Link>
-          <Link to="/register" className="btn-register">Registrarse</Link>
-                  </div>
+          {isLoggedIn ? (
+            // ✅ Usuario LOGUEADO - Mostrar Perfil y Cerrar Sesión
+            <>
+              <Link to="/perfil" className="btn-profile">
+                👤 Perfil
+                {userData && (
+                  <span className="user-name">
+                    {userData.nombres}
+                  </span>
+                )}
+              </Link>
+              <button 
+                onClick={handleLogout} 
+                className="btn-logout"
+              >
+                Cerrar Sesión
+              </button>
+            </>
+          ) : (
+            // ❌ Usuario NO logueado - Mostrar Login y Registro
+            <>
+              <Link to="/login" className="btn-login">Iniciar Sesión</Link>
+              <Link to="/register" className="btn-register">Registrarse</Link>
+            </>
+          )}
+        </div>
       </div>
     </header>
   );

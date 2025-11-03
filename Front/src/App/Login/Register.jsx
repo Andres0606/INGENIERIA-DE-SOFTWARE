@@ -40,6 +40,12 @@ const Register = () => {
       return;
     }
 
+    if (formData.password.length < 6) {
+      setError('La contraseña debe tener al menos 6 caracteres');
+      setLoading(false);
+      return;
+    }
+
     if (!formData.acceptTerms) {
       setError('Debes aceptar los términos y condiciones');
       setLoading(false);
@@ -49,18 +55,19 @@ const Register = () => {
     try {
       // Mapear los datos del formulario
       const userData = {
-  nombres: formData.nombre,
-  apellidos: formData.apellido,
-  correo: formData.email,
-  contrasena: formData.password,
-  idcarrera: formData.carrera ? parseInt(formData.carrera) : null, // minúscula
-  telefono: formData.telefono || null,
-  idtipousuario: formData.tipoUsuario === 'emprendedor' ? 2 : 3 // minúscula
-};
+        nombres: formData.nombre,
+        apellidos: formData.apellido,
+        correo: formData.email,
+        contrasena: formData.password,
+        idcarrera: formData.carrera ? parseInt(formData.carrera) : null,
+        telefono: formData.telefono || null,
+        idtipousuario: formData.tipoUsuario === 'emprendedor' ? 2 : 3,
+        tipodocumento: null,
+        numdocumento: null
+      };
 
       console.log('Enviando datos:', userData);
 
-      // URL del backend - verifica que sea correcta
       const API_URL = 'http://localhost:3000/api/usuarios/registro';
       
       const response = await fetch(API_URL, {
@@ -73,14 +80,15 @@ const Register = () => {
 
       console.log('Respuesta recibida:', response);
 
-      if (!response.ok) {
-        throw new Error(`Error HTTP: ${response.status}`);
-      }
-
       const data = await response.json();
       console.log('Datos recibidos:', data);
 
+      if (!response.ok) {
+        throw new Error(data.message || `Error HTTP: ${response.status}`);
+      }
+
       if (data.success) {
+        // ✅ SOLO redirigir a login - NO sessionStorage aquí
         alert('¡Registro exitoso! Ahora puedes iniciar sesión.');
         navigate('/login');
       } else {
@@ -88,7 +96,7 @@ const Register = () => {
       }
     } catch (error) {
       console.error('Error completo:', error);
-      setError(`Error de conexión: ${error.message}. Verifica que el servidor esté corriendo en http://localhost:3000`);
+      setError(error.message || 'Error de conexión. Verifica que el servidor esté corriendo en http://localhost:3000');
     } finally {
       setLoading(false);
     }
@@ -127,7 +135,8 @@ const Register = () => {
             padding: '8px 16px',
             borderRadius: '5px',
             cursor: 'pointer',
-            marginBottom: '10px'
+            marginBottom: '10px',
+            fontSize: '12px'
           }}
         >
           Probar Conexión Backend
@@ -155,9 +164,8 @@ const Register = () => {
         )}
 
         <form onSubmit={handleSubmit} className="register-form-content">
-          {/* ... (mantén todos tus campos igual) ... */}
           <div className="register-field">
-            <label>Nombre</label>
+            <label>Nombre *</label>
             <input
               type="text"
               name="nombre"
@@ -169,7 +177,7 @@ const Register = () => {
           </div>
 
           <div className="register-field">
-            <label>Apellido</label>
+            <label>Apellido *</label>
             <input
               type="text"
               name="apellido"
@@ -181,7 +189,7 @@ const Register = () => {
           </div>
 
           <div className="register-field">
-            <label>Correo Electrónico</label>
+            <label>Correo Electrónico *</label>
             <input
               type="email"
               name="email"
@@ -193,11 +201,11 @@ const Register = () => {
           </div>
 
           <div className="register-field">
-            <label>Contraseña</label>
+            <label>Contraseña *</label>
             <input
               type="password"
               name="password"
-              placeholder="········"
+              placeholder="Mínimo 6 caracteres"
               value={formData.password}
               onChange={handleChange}
               required
@@ -206,11 +214,11 @@ const Register = () => {
           </div>
 
           <div className="register-field">
-            <label>Confirmar Contraseña</label>
+            <label>Confirmar Contraseña *</label>
             <input
               type="password"
               name="confirmPassword"
-              placeholder="········"
+              placeholder="Repite tu contraseña"
               value={formData.confirmPassword}
               onChange={handleChange}
               required
@@ -261,7 +269,7 @@ const Register = () => {
           </div>
 
           <div className="register-field">
-            <label>Tipo de Usuario</label>
+            <label>Tipo de Usuario *</label>
             <select
               name="tipoUsuario"
               value={formData.tipoUsuario}

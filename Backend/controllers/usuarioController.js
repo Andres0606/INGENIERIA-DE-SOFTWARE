@@ -1,6 +1,7 @@
 import supabase from '../config/supabase.js'
+import bcrypt from 'bcrypt'
 
-// Registrar nuevo usuario
+// Registrar nuevo usuario - CON BCRYPT
 export const registrarUsuario = async (req, res) => {
   try {
     const {
@@ -25,6 +26,15 @@ export const registrarUsuario = async (req, res) => {
       })
     }
 
+    // Validar formato de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(correo)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Formato de correo electrónico inválido'
+      })
+    }
+
     // Verificar si el correo ya existe
     const { data: usuarioExistente, error: errorVerificacion } = await supabase
       .from('usuario')
@@ -44,7 +54,11 @@ export const registrarUsuario = async (req, res) => {
       throw errorVerificacion
     }
 
-    // Insertar nuevo usuario - ESPECIFICAR CAMPOS A DEVOLVER
+    // 🔐 ENCRIPTAR CONTRASEÑA
+    const saltRounds = 10;
+    const contrasenaEncriptada = await bcrypt.hash(contrasena, saltRounds);
+
+    // Insertar nuevo usuario CON CONTRASEÑA ENCRIPTADA
     const { data: nuevoUsuario, error: errorInsercion } = await supabase
       .from('usuario')
       .insert([
@@ -54,7 +68,7 @@ export const registrarUsuario = async (req, res) => {
           nombres,
           apellidos,
           correo,
-          contrasena,
+          contrasena: contrasenaEncriptada,
           tipodocumento: tipodocumento || null,
           numdocumento: numdocumento || null,
           telefono: telefono || null,
@@ -96,7 +110,7 @@ export const registrarUsuario = async (req, res) => {
   }
 }
 
-// Obtener tipos de usuario
+// Obtener tipos de usuario - AGREGAR export
 export const obtenerTiposUsuario = async (req, res) => {
   try {
     const { data, error } = await supabase
@@ -120,7 +134,7 @@ export const obtenerTiposUsuario = async (req, res) => {
   }
 }
 
-// Obtener carreras
+// Obtener carreras - AGREGAR export
 export const obtenerCarreras = async (req, res) => {
   try {
     const { data, error } = await supabase
@@ -144,7 +158,7 @@ export const obtenerCarreras = async (req, res) => {
   }
 }
 
-// Login de usuario - CORREGIDO PARA INCLUIR TODOS LOS CAMPOS
+// Login de usuario - CON BCRYPT
 export const loginUsuario = async (req, res) => {
   try {
     const { correo, contrasena } = req.body;
@@ -157,7 +171,7 @@ export const loginUsuario = async (req, res) => {
       });
     }
 
-    // Buscar usuario por correo - INCLUIR TODOS LOS CAMPOS NECESARIOS
+    // Buscar usuario por correo
     const { data: usuario, error } = await supabase
       .from('usuario')
       .select('idusuario, nombres, apellidos, correo, contrasena, idtipousuario, idcarrera, telefono, tipodocumento, numdocumento, estado')
@@ -175,15 +189,17 @@ export const loginUsuario = async (req, res) => {
       throw error;
     }
 
-    // Verificar contraseña
-    if (usuario.contrasena !== contrasena) {
+    // 🔐 VERIFICAR CONTRASEÑA ENCRIPTADA
+    const contrasenaValida = await bcrypt.compare(contrasena, usuario.contrasena);
+    
+    if (!contrasenaValida) {
       return res.status(401).json({
         success: false,
         message: 'Contraseña incorrecta'
       });
     }
 
-    // Login exitoso - DEVOLVER TODOS LOS CAMPOS
+    // Login exitoso
     res.json({
       success: true,
       message: 'Login exitoso',

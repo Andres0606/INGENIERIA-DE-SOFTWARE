@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import '../../Components/Profile.css';
-
+import Header from '../Header-footer/Header.jsx';
+import Footer from '../Header-footer/Footer.jsx';
 const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [userData, setUserData] = useState({
@@ -32,6 +33,8 @@ const Profile = () => {
   };
 
   return (
+    <>
+    <Header></Header>
     <div className="profile-container">
       <div className="profile-card">
         <button className="back-button">
@@ -191,6 +194,8 @@ const Profile = () => {
         </div>
       </div>
     </div>
+    <Footer></Footer>
+    </>
   );
 };
 

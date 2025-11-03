@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import '../../Components/Eventos.css';
-
+import Header from '../Header-footer/Header.jsx';
+import Footer from '../Header-footer/Footer.jsx';
 const Eventos = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('Todos');
@@ -109,6 +110,8 @@ const Eventos = () => {
   });
 
   return (
+    <> 
+    <Header></Header>
     <div className="eventos-page">
       {/* Header Section */}
       <section className="eventos-header">
@@ -249,6 +252,8 @@ const Eventos = () => {
         </div>
       </section>
     </div>
+    <Footer></Footer>
+    </>
   );
 };
 
