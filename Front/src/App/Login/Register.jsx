@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import '../../Components/Register.css';
 
 const Register = () => {
@@ -15,6 +16,10 @@ const Register = () => {
     acceptTerms: false
   });
 
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
@@ -23,16 +28,109 @@ const Register = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
+    setLoading(true);
+    setError('');
+
+    // Validaciones
+    if (formData.password !== formData.confirmPassword) {
+      setError('Las contraseñas no coinciden');
+      setLoading(false);
+      return;
+    }
+
+    if (!formData.acceptTerms) {
+      setError('Debes aceptar los términos y condiciones');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // Mapear los datos del formulario
+      const userData = {
+  nombres: formData.nombre,
+  apellidos: formData.apellido,
+  correo: formData.email,
+  contrasena: formData.password,
+  idcarrera: formData.carrera ? parseInt(formData.carrera) : null, // minúscula
+  telefono: formData.telefono || null,
+  idtipousuario: formData.tipoUsuario === 'emprendedor' ? 2 : 3 // minúscula
+};
+
+      console.log('Enviando datos:', userData);
+
+      // URL del backend - verifica que sea correcta
+      const API_URL = 'http://localhost:3000/api/usuarios/registro';
+      
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData),
+      });
+
+      console.log('Respuesta recibida:', response);
+
+      if (!response.ok) {
+        throw new Error(`Error HTTP: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Datos recibidos:', data);
+
+      if (data.success) {
+        alert('¡Registro exitoso! Ahora puedes iniciar sesión.');
+        navigate('/login');
+      } else {
+        setError(data.message || 'Error en el registro');
+      }
+    } catch (error) {
+      console.error('Error completo:', error);
+      setError(`Error de conexión: ${error.message}. Verifica que el servidor esté corriendo en http://localhost:3000`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Función para probar la conexión con el backend
+  const testConnection = async () => {
+    try {
+      const response = await fetch('http://localhost:3000');
+      const data = await response.json();
+      console.log('Conexión exitosa:', data);
+      alert('✅ Conexión con el backend exitosa');
+    } catch (error) {
+      console.error('Error de conexión:', error);
+      alert('❌ No se pudo conectar con el backend. Verifica que esté corriendo en http://localhost:3000');
+    }
   };
 
   return (
     <div className="register-page">
       <div className="register-form">
-        <button className="register-back-btn">
+        <button 
+          className="register-back-btn"
+          onClick={() => navigate(-1)}
+        >
           ← Volver al menú
+        </button>
+
+        {/* Botón para probar conexión - puedes quitarlo después */}
+        <button 
+          onClick={testConnection}
+          style={{
+            background: '#ff6b6b',
+            color: 'white',
+            border: 'none',
+            padding: '8px 16px',
+            borderRadius: '5px',
+            cursor: 'pointer',
+            marginBottom: '10px'
+          }}
+        >
+          Probar Conexión Backend
         </button>
 
         <div className="register-header">
@@ -43,7 +141,21 @@ const Register = () => {
           </div>
         </div>
 
+        {error && (
+          <div style={{
+            background: '#ffebee',
+            color: '#c62828',
+            padding: '12px',
+            borderRadius: '8px',
+            marginBottom: '20px',
+            border: '1px solid #ffcdd2'
+          }}>
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="register-form-content">
+          {/* ... (mantén todos tus campos igual) ... */}
           <div className="register-field">
             <label>Nombre</label>
             <input
@@ -52,6 +164,7 @@ const Register = () => {
               placeholder="Tu nombre"
               value={formData.nombre}
               onChange={handleChange}
+              required
             />
           </div>
 
@@ -63,6 +176,7 @@ const Register = () => {
               placeholder="Tu apellido"
               value={formData.apellido}
               onChange={handleChange}
+              required
             />
           </div>
 
@@ -74,6 +188,7 @@ const Register = () => {
               placeholder="tu@email.com"
               value={formData.email}
               onChange={handleChange}
+              required
             />
           </div>
 
@@ -85,6 +200,8 @@ const Register = () => {
               placeholder="········"
               value={formData.password}
               onChange={handleChange}
+              required
+              minLength="6"
             />
           </div>
 
@@ -96,6 +213,7 @@ const Register = () => {
               placeholder="········"
               value={formData.confirmPassword}
               onChange={handleChange}
+              required
             />
           </div>
 
@@ -107,17 +225,17 @@ const Register = () => {
               onChange={handleChange}
             >
               <option value="">Selecciona tu carrera</option>
-              <option value="derecho">Derecho</option>
-              <option value="ingenieria-sistemas">Ingeniería de sistemas</option>
-              <option value="ingenieria-civil">Ingeniería civil</option>
-              <option value="contaduria">Contaduría</option>
-              <option value="administracion-empresas">Administración de empresas</option>
-              <option value="medicina-veterinaria">Medicina veterinaria y zootecnia</option>
-              <option value="psicologia">Psicología</option>
-              <option value="medicina">Medicina</option>
-              <option value="enfermeria">Enfermería</option>
-              <option value="odontologia">Odontología</option>
-              <option value="ninguna">Ninguna</option>
+              <option value="1">Derecho</option>
+              <option value="2">Ingeniería de sistemas</option>
+              <option value="3">Ingeniería civil</option>
+              <option value="4">Contaduría</option>
+              <option value="5">Administración de empresas</option>
+              <option value="6">Medicina veterinaria y zootecnia</option>
+              <option value="7">Psicología</option>
+              <option value="8">Medicina</option>
+              <option value="9">Enfermería</option>
+              <option value="10">Odontología</option>
+              <option value="11">Ninguna</option>
             </select>
           </div>
 
@@ -148,12 +266,11 @@ const Register = () => {
               name="tipoUsuario"
               value={formData.tipoUsuario}
               onChange={handleChange}
+              required
             >
               <option value="">Selecciona un rol</option>
-              <option value="estudiante">Estudiante</option>
-              <option value="profesor">Profesor</option>
               <option value="emprendedor">Emprendedor</option>
-              <option value="mentor">Mentor</option>
+              <option value="miembro">Miembro UCC</option>
             </select>
           </div>
 
@@ -170,12 +287,16 @@ const Register = () => {
             </label>
           </div>
 
-          <button type="submit" className="register-submit">
-            Crear Cuenta
+          <button 
+            type="submit" 
+            className="register-submit"
+            disabled={loading}
+          >
+            {loading ? 'Creando Cuenta...' : 'Crear Cuenta'}
           </button>
 
           <p className="register-login-link">
-            ¿Ya tienes cuenta? <a href="#">Inicia sesión aquí</a>
+            ¿Ya tienes cuenta? <Link to="/login">Inicia sesión aquí</Link>
           </p>
 
           <div className="register-divider">

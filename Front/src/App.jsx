@@ -11,6 +11,7 @@ import Eventos from "./App/Interfaces/Eventos";
 import Contactos from "./App/Interfaces/Contactos"; // ✅ plural correcto
 import Login from "./App/Login/Login"; // ✅ login
 import Register from "./App/Login/Register"; // ✅ registro
+import Profile from "./App/Interfaces/Profile"; // ✅ perfil
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
         <Route path="/contactos" element={<Contactos />} />
         <Route path="/login" element={<Login />} /> {/* ✅ Login */}
         <Route path="/register" element={<Register />} /> {/* ✅ Registro */}
+        <Route path="/perfil" element={<Profile />} />
       </Routes>
       <Footer />
     </BrowserRouter>
