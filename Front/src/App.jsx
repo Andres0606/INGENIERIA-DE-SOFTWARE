@@ -12,7 +12,7 @@ import Contactos from "./App/Interfaces/Contactos"; // ✅ plural correcto
 import Login from "./App/Login/Login"; // ✅ login
 import Register from "./App/Login/Register"; // ✅ registro
 import Profile from "./App/Interfaces/Profile"; // ✅ perfil
-
+import MisEmprendimientos from "./App/Interfaces/MisEmprendimientos";
 function App() {
   return (
     <BrowserRouter>
@@ -26,6 +26,7 @@ function App() {
         <Route path="/login" element={<Login />} /> {/* ✅ Login */}
         <Route path="/register" element={<Register />} /> {/* ✅ Registro */}
         <Route path="/perfil" element={<Profile />} />
+        <Route path="/mis-emprendimientos" element={<MisEmprendimientos />} />
       </Routes>
      
     </BrowserRouter>

@@ -48,6 +48,9 @@ const Header = () => {
     window.location.reload();
   };
 
+  // Verificar si el usuario es emprendedor (idtipousuario = 2)
+  const isEmprendedor = userData && userData.idtipousuario === 2;
+
   return (
     <header className="header">
       <div className="header-container">
@@ -66,11 +69,18 @@ const Header = () => {
           <Link to="/contactos" className="nav-link">Contactos</Link>
         </nav>
 
-        {/* Auth Buttons - CAMBIADO */}
+        {/* Auth Buttons - MEJORADO */}
         <div className="auth-buttons">
           {isLoggedIn ? (
-            // ✅ Usuario LOGUEADO - Mostrar Perfil y Cerrar Sesión
+            // ✅ Usuario LOGUEADO - Mostrar Mis Emprendimientos, Perfil y Cerrar Sesión
             <>
+              {/* Botón "Mis Emprendimientos" solo para emprendedores */}
+              {isEmprendedor && (
+                <Link to="/mis-emprendimientos" className="btn-emprendimientos">
+                  🛍 Mis Emprendimientos
+                </Link>
+              )}
+              
               <Link to="/perfil" className="btn-profile">
                 👤 Perfil
                 {userData && (
@@ -79,6 +89,7 @@ const Header = () => {
                   </span>
                 )}
               </Link>
+              
               <button 
                 onClick={handleLogout} 
                 className="btn-logout"

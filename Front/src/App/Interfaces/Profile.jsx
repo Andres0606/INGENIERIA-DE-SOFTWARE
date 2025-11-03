@@ -7,7 +7,9 @@ import Footer from '../Header-footer/Footer.jsx';
 const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [userData, setUserData] = useState({
+    idusuario: '',
     nombres: '',
     apellidos: '',
     correo: '',
@@ -19,9 +21,11 @@ const Profile = () => {
     numdocumento: ''
   });
   
+  const [originalData, setOriginalData] = useState({});
   const [carreras, setCarreras] = useState([]);
   const [tiposUsuario, setTiposUsuario] = useState([]);
   const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState(''); // 'success' o 'error'
   const navigate = useNavigate();
 
   // Cargar datos del usuario desde sessionStorage
@@ -30,13 +34,21 @@ const Profile = () => {
       const storedUserData = sessionStorage.getItem('userData');
       if (storedUserData) {
         const user = JSON.parse(storedUserData);
-        setUserData({
-          ...user,
-          // Asegurar que los campos opcionales tengan valores por defecto
+        const userDataFormatted = {
+          idusuario: user.idusuario || '',
+          nombres: user.nombres || '',
+          apellidos: user.apellidos || '',
+          correo: user.correo || '',
           telefono: user.telefono || '',
+          idcarrera: user.idcarrera || '',
+          idtipousuario: user.idtipousuario || '',
+          fecharegistro: user.fecharegistro || '',
           tipodocumento: user.tipodocumento || '',
           numdocumento: user.numdocumento || ''
-        });
+        };
+        
+        setUserData(userDataFormatted);
+        setOriginalData(userDataFormatted); // Guardar copia para cancelar
       }
       setLoading(false);
     };
@@ -80,53 +92,88 @@ const Profile = () => {
     }));
   };
 
+  // FUNCIÓN DE EDITAR PERFIL - CONEXIÓN CON BACKEND
   const handleSave = async () => {
     try {
-      setLoading(true);
+      setSaving(true);
+      setMessage('');
+      setMessageType('');
       
-      // Preparar datos para enviar (solo campos editables)
+      // Validaciones básicas
+      if (!userData.nombres.trim() || !userData.apellidos.trim()) {
+        setMessage('Nombre y apellido son obligatorios');
+        setMessageType('error');
+        return;
+      }
+
+      // Preparar datos para enviar al backend
       const updateData = {
-        nombres: userData.nombres,
-        apellidos: userData.apellidos,
-        telefono: userData.telefono,
+        idusuario: userData.idusuario,
+        nombres: userData.nombres.trim(),
+        apellidos: userData.apellidos.trim(),
+        telefono: userData.telefono.trim() || null,
         idcarrera: userData.idcarrera ? parseInt(userData.idcarrera) : null,
-        tipodocumento: userData.tipodocumento || null,
-        numdocumento: userData.numdocumento || null
+        tipodocumento: userData.tipodocumento.trim() || null,
+        numdocumento: userData.numdocumento.trim() || null
       };
 
-      console.log('Actualizando datos:', updateData);
+      console.log('Enviando datos de actualización:', updateData);
 
-      // Aquí deberías hacer la llamada a tu API para actualizar el usuario
-      // Por ahora solo simulamos la actualización
-      
-      // Actualizar sessionStorage con los nuevos datos
-      const updatedUserData = {
-        ...JSON.parse(sessionStorage.getItem('userData')),
-        ...updateData
-      };
-      sessionStorage.setItem('userData', JSON.stringify(updatedUserData));
+      // LLAMADA AL BACKEND PARA ACTUALIZAR PERFIL
+      const response = await fetch(`http://localhost:3000/api/usuarios/actualizar`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updateData),
+      });
 
-      setIsEditing(false);
-      setMessage('Perfil actualizado correctamente');
-      
-      setTimeout(() => setMessage(''), 3000);
+      const data = await response.json();
+      console.log('Respuesta del backend:', data);
+
+      if (!response.ok) {
+        throw new Error(data.message || `Error HTTP: ${response.status}`);
+      }
+
+      if (data.success) {
+        // Actualizar sessionStorage con los nuevos datos
+        const updatedUserData = {
+          ...JSON.parse(sessionStorage.getItem('userData')),
+          ...updateData
+        };
+        sessionStorage.setItem('userData', JSON.stringify(updatedUserData));
+        
+        // Actualizar estado original
+        setOriginalData(updatedUserData);
+
+        setIsEditing(false);
+        setMessage('Perfil actualizado correctamente');
+        setMessageType('success');
+        
+        // Recargar la página después de 2 segundos para actualizar el header
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+        
+      } else {
+        throw new Error(data.message || 'Error al actualizar el perfil');
+      }
 
     } catch (error) {
       console.error('Error actualizando perfil:', error);
-      setMessage('Error al actualizar el perfil');
+      setMessage(error.message || 'Error al actualizar el perfil');
+      setMessageType('error');
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
   const handleCancel = () => {
-    // Recargar datos originales
-    const storedUserData = sessionStorage.getItem('userData');
-    if (storedUserData) {
-      setUserData(JSON.parse(storedUserData));
-    }
+    // Restaurar datos originales
+    setUserData(originalData);
     setIsEditing(false);
     setMessage('');
+    setMessageType('');
   };
 
   const handleBack = () => {
@@ -140,14 +187,30 @@ const Profile = () => {
 
   // Obtener nombre de la carrera
   const getCarreraNombre = () => {
+    if (!userData.idcarrera) return 'No especificada';
     const carrera = carreras.find(c => c.idcarrera === parseInt(userData.idcarrera));
     return carrera ? carrera.nombre : 'No especificada';
   };
 
   // Obtener nombre del tipo de usuario
   const getTipoUsuarioNombre = () => {
+    if (!userData.idtipousuario) return 'No especificado';
     const tipo = tiposUsuario.find(t => t.idtipousuario === parseInt(userData.idtipousuario));
     return tipo ? tipo.nombre : 'No especificado';
+  };
+
+  // Formatear fecha
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Fecha no disponible';
+    try {
+      return new Date(dateString).toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    } catch (error) {
+      return 'Fecha no disponible';
+    }
   };
 
   if (loading) {
@@ -174,7 +237,7 @@ const Profile = () => {
           </button>
 
           {message && (
-            <div className={`message ${message.includes('Error') ? 'error' : 'success'}`}>
+            <div className={`message ${messageType}`}>
               {message}
             </div>
           )}
@@ -188,6 +251,7 @@ const Profile = () => {
             <div className="profile-title">
               <h1>{userData.nombres} {userData.apellidos}</h1>
               <p className="profile-role">{getTipoUsuarioNombre()}</p>
+              <p className="profile-email">{userData.correo}</p>
             </div>
             {!isEditing && (
               <button className="edit-button" onClick={() => setIsEditing(true)}>
@@ -201,13 +265,14 @@ const Profile = () => {
               <h2>Información Personal</h2>
               
               <div className="info-row">
-                <label>Nombre</label>
+                <label>Nombre *</label>
                 {isEditing ? (
                   <input
                     type="text"
                     name="nombres"
                     value={userData.nombres}
                     onChange={handleChange}
+                    required
                   />
                 ) : (
                   <span>{userData.nombres}</span>
@@ -215,13 +280,14 @@ const Profile = () => {
               </div>
 
               <div className="info-row">
-                <label>Apellido</label>
+                <label>Apellido *</label>
                 {isEditing ? (
                   <input
                     type="text"
                     name="apellidos"
                     value={userData.apellidos}
                     onChange={handleChange}
+                    required
                   />
                 ) : (
                   <span>{userData.apellidos}</span>
@@ -313,12 +379,7 @@ const Profile = () => {
 
               <div className="info-row">
                 <label>Miembro desde</label>
-                <span>
-                  {userData.fecharegistro 
-                    ? new Date(userData.fecharegistro).toLocaleDateString('es-ES')
-                    : 'Fecha no disponible'
-                  }
-                </span>
+                <span>{formatDate(userData.fecharegistro)}</span>
               </div>
             </div>
 
@@ -327,11 +388,15 @@ const Profile = () => {
                 <button 
                   className="save-button" 
                   onClick={handleSave}
-                  disabled={loading}
+                  disabled={saving}
                 >
-                  {loading ? 'Guardando...' : 'Guardar Cambios'}
+                  {saving ? 'Guardando...' : 'Guardar Cambios'}
                 </button>
-                <button className="cancel-button" onClick={handleCancel}>
+                <button 
+                  className="cancel-button" 
+                  onClick={handleCancel}
+                  disabled={saving}
+                >
                   Cancelar
                 </button>
               </div>

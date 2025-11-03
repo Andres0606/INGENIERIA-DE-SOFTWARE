@@ -225,3 +225,76 @@ export const loginUsuario = async (req, res) => {
     });
   }
 };
+// Actualizar perfil de usuario
+export const actualizarPerfil = async (req, res) => {
+  try {
+    const {
+      idusuario,
+      nombres,
+      apellidos,
+      telefono,
+      idcarrera,
+      tipodocumento,
+      numdocumento
+    } = req.body;
+
+    console.log('Actualizando perfil para usuario:', idusuario);
+
+    // Validaciones
+    if (!idusuario) {
+      return res.status(400).json({
+        success: false,
+        message: 'ID de usuario es requerido'
+      });
+    }
+
+    if (!nombres || !apellidos) {
+      return res.status(400).json({
+        success: false,
+        message: 'Nombre y apellido son obligatorios'
+      });
+    }
+
+    // Actualizar usuario en la base de datos
+    const { data: usuarioActualizado, error } = await supabase
+      .from('usuario')
+      .update({
+        nombres: nombres.trim(),
+        apellidos: apellidos.trim(),
+        telefono: telefono,
+        idcarrera: idcarrera,
+        tipodocumento: tipodocumento,
+        numdocumento: numdocumento
+      })
+      .eq('idusuario', idusuario)
+      .select('idusuario, nombres, apellidos, correo, idtipousuario, idcarrera, telefono, tipodocumento, numdocumento, estado, fecharegistro')
+
+    if (error) {
+      console.log('Error al actualizar usuario:', error);
+      throw error;
+    }
+
+    if (!usuarioActualizado || usuarioActualizado.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Usuario no encontrado'
+      });
+    }
+
+    console.log('Perfil actualizado exitosamente:', usuarioActualizado[0]);
+
+    res.json({
+      success: true,
+      message: 'Perfil actualizado exitosamente',
+      data: usuarioActualizado[0]
+    });
+
+  } catch (error) {
+    console.error('Error en actualización de perfil:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor',
+      error: error.message
+    });
+  }
+};

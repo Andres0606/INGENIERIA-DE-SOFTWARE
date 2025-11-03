@@ -3,7 +3,8 @@ import {
   registrarUsuario, 
   obtenerTiposUsuario, 
   obtenerCarreras,
-  loginUsuario  // 👈 Agrega esta importación
+  loginUsuario,
+  actualizarPerfil  // 👈 Agrega esta importación
 } from '../controllers/usuarioController.js'
 
 const router = express.Router()
@@ -13,5 +14,6 @@ router.post('/registro', registrarUsuario)
 router.post('/login', loginUsuario)  // 👈 Agrega esta ruta
 router.get('/tipos-usuario', obtenerTiposUsuario)
 router.get('/carreras', obtenerCarreras)
+router.put('/actualizar', actualizarPerfil) 
 
 export default router
