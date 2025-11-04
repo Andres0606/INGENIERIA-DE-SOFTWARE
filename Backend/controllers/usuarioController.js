@@ -75,7 +75,7 @@ export const registrarUsuario = async (req, res) => {
           estado: 'activo'
         }
       ])
-      .select('idusuario, nombres, apellidos, correo, idtipousuario, idcarrera, telefono, tipodocumento, numdocumento')
+      .select('idusuario, nombres, apellidos, correo, idtipousuario, idcarrera, telefono, tipodocumento, numdocumento,fecharegistro')
 
     if (errorInsercion) {
       console.log('Error al insertar usuario:', errorInsercion);
@@ -96,7 +96,8 @@ export const registrarUsuario = async (req, res) => {
         idcarrera: nuevoUsuario[0].idcarrera,
         telefono: nuevoUsuario[0].telefono,
         tipodocumento: nuevoUsuario[0].tipodocumento,
-        numdocumento: nuevoUsuario[0].numdocumento
+        numdocumento: nuevoUsuario[0].numdocumento,
+        fecharegistro: nuevoUsuario[0].fecharegistro
       }
     })
 
@@ -174,7 +175,7 @@ export const loginUsuario = async (req, res) => {
     // Buscar usuario por correo
     const { data: usuario, error } = await supabase
       .from('usuario')
-      .select('idusuario, nombres, apellidos, correo, contrasena, idtipousuario, idcarrera, telefono, tipodocumento, numdocumento, estado')
+      .select('idusuario, nombres, apellidos, correo, contrasena, idtipousuario, idcarrera, telefono, tipodocumento, numdocumento, estado,fecharegistro')
       .eq('correo', correo)
       .eq('estado', 'activo')
       .single();
@@ -212,7 +213,8 @@ export const loginUsuario = async (req, res) => {
         idcarrera: usuario.idcarrera,
         telefono: usuario.telefono,
         tipodocumento: usuario.tipodocumento,
-        numdocumento: usuario.numdocumento
+        numdocumento: usuario.numdocumento,
+        fecharegistro: usuario.fecharegistro 
       }
     });
 

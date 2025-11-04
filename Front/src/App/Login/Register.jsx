@@ -13,6 +13,8 @@ const Register = () => {
     telefono: '',
     fechaNacimiento: '',
     tipoUsuario: '',
+    tipoDocumento: '',       // ← NUEVO
+    numeroDocumento: '',     // ← NUEVO
     acceptTerms: false
   });
 
@@ -52,6 +54,19 @@ const Register = () => {
       return;
     }
 
+    // Validar documento si se seleccionó tipo
+    if (formData.tipoDocumento && !formData.numeroDocumento) {
+      setError('Si seleccionas tipo de documento, debes ingresar el número');
+      setLoading(false);
+      return;
+    }
+
+    if (!formData.tipoDocumento && formData.numeroDocumento) {
+      setError('Debes seleccionar el tipo de documento');
+      setLoading(false);
+      return;
+    }
+
     try {
       // Mapear los datos del formulario
       const userData = {
@@ -62,8 +77,8 @@ const Register = () => {
         idcarrera: formData.carrera ? parseInt(formData.carrera) : null,
         telefono: formData.telefono || null,
         idtipousuario: formData.tipoUsuario === 'emprendedor' ? 2 : 3,
-        tipodocumento: null,
-        numdocumento: null
+        tipodocumento: formData.tipoDocumento || null,        // ← ACTUALIZADO
+        numdocumento: formData.numeroDocumento || null        // ← ACTUALIZADO
       };
 
       console.log('Enviando datos:', userData);
@@ -88,7 +103,6 @@ const Register = () => {
       }
 
       if (data.success) {
-        // ✅ SOLO redirigir a login - NO sessionStorage aquí
         alert('¡Registro exitoso! Ahora puedes iniciar sesión.');
         navigate('/login');
       } else {
@@ -99,19 +113,6 @@ const Register = () => {
       setError(error.message || 'Error de conexión. Verifica que el servidor esté corriendo en http://localhost:3000');
     } finally {
       setLoading(false);
-    }
-  };
-
-  // Función para probar la conexión con el backend
-  const testConnection = async () => {
-    try {
-      const response = await fetch('http://localhost:3000');
-      const data = await response.json();
-      console.log('Conexión exitosa:', data);
-      alert('✅ Conexión con el backend exitosa');
-    } catch (error) {
-      console.error('Error de conexión:', error);
-      alert('❌ No se pudo conectar con el backend. Verifica que esté corriendo en http://localhost:3000');
     }
   };
 
@@ -180,6 +181,33 @@ const Register = () => {
               value={formData.email}
               onChange={handleChange}
               required
+            />
+          </div>
+
+          {/* NUEVOS CAMPOS DE DOCUMENTO */}
+          <div className="register-field">
+            <label>Tipo de Documento</label>
+            <select
+              name="tipoDocumento"
+              value={formData.tipoDocumento}
+              onChange={handleChange}
+            >
+              <option value="">Selecciona tipo de documento</option>
+              <option value="CC">Cédula de Ciudadanía</option>
+              <option value="TI">Tarjeta de Identidad</option>
+              <option value="CE">Cédula de Extranjería</option>
+              <option value="PA">Pasaporte</option>
+            </select>
+          </div>
+
+          <div className="register-field">
+            <label>Número de Documento</label>
+            <input
+              type="text"
+              name="numeroDocumento"
+              placeholder="Ej: 123456789"
+              value={formData.numeroDocumento}
+              onChange={handleChange}
             />
           </div>
 

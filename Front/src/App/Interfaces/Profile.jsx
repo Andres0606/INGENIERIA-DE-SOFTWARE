@@ -36,41 +36,52 @@ const Profile = () => {
   const [activeSection, setActiveSection] = useState('perfil');
   const navigate = useNavigate();
 
-  // Función para cargar datos del usuario
+  // Función para cargar datos del usuario CON VALIDACIONES
   const loadUserData = () => {
-    const storedUserData = sessionStorage.getItem('userData');
-    if (storedUserData) {
-      const user = JSON.parse(storedUserData);
-      const userDataFormatted = {
-        idusuario: user.idusuario || '',
-        nombres: user.nombres || '',
-        apellidos: user.apellidos || '',
-        correo: user.correo || '',
-        telefono: user.telefono || '',
-        idcarrera: user.idcarrera || '',
-        idtipousuario: user.idtipousuario || '',
-        fecharegistro: user.fecharegistro || '',
-        tipodocumento: user.tipodocumento || '',
-        numdocumento: user.numdocumento || '',
-        saldo: user.saldo || 0
-      };
-      
-      setUserData(userDataFormatted);
-      setOriginalData(userDataFormatted);
+    try {
+      const storedUserData = sessionStorage.getItem('userData');
+      if (storedUserData) {
+        const user = JSON.parse(storedUserData);
+        console.log('📋 Datos del usuario en sessionStorage:', user);
+        
+        const userDataFormatted = {
+          idusuario: user.idusuario || '',
+          nombres: user.nombres || '',
+          apellidos: user.apellidos || '',
+          correo: user.correo || '',
+          telefono: user.telefono || '',
+          idcarrera: user.idcarrera || '',
+          idtipousuario: user.idtipousuario || '',
+          fecharegistro: user.fecharegistro || '',
+          tipodocumento: user.tipodocumento || '',
+          numdocumento: user.numdocumento || '',
+          saldo: user.saldo || 0
+        };
+        
+        setUserData(userDataFormatted);
+        setOriginalData(userDataFormatted);
+      }
+    } catch (error) {
+      console.error('❌ Error cargando datos del usuario:', error);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   // Función para actualizar saldo desde sessionStorage
   const actualizarSaldoDesdeStorage = () => {
-    const storedUserData = sessionStorage.getItem('userData');
-    if (storedUserData) {
-      const user = JSON.parse(storedUserData);
-      setUserData(prev => ({
-        ...prev,
-        saldo: user.saldo || 0
-      }));
-      console.log('✅ Saldo actualizado en Profile:', user.saldo);
+    try {
+      const storedUserData = sessionStorage.getItem('userData');
+      if (storedUserData) {
+        const user = JSON.parse(storedUserData);
+        setUserData(prev => ({
+          ...prev,
+          saldo: user.saldo || 0
+        }));
+        console.log('✅ Saldo actualizado en Profile:', user.saldo);
+      }
+    } catch (error) {
+      console.error('❌ Error actualizando saldo:', error);
     }
   };
 
@@ -96,22 +107,12 @@ const Profile = () => {
     };
 
     window.addEventListener('userDataUpdated', handleUserDataUpdated);
-    
-    // También verificar cada 3 segundos (para cambios dentro de la misma pestaña)
-    const interval = setInterval(() => {
-      const currentUserData = JSON.parse(sessionStorage.getItem('userData') || '{}');
-      if (currentUserData.saldo !== userData.saldo) {
-        console.log('🔄 Saldo cambió detectado, actualizando...');
-        actualizarSaldoDesdeStorage();
-      }
-    }, 3000);
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('userDataUpdated', handleUserDataUpdated);
-      clearInterval(interval);
     };
-  }, [userData.saldo]);
+  }, []);
 
   // Actualizar saldo cuando se cambia de sección
   useEffect(() => {
@@ -159,7 +160,7 @@ const Profile = () => {
       setMessageType('');
       
       // Validaciones básicas
-      if (!userData.nombres.trim() || !userData.apellidos.trim()) {
+      if (!userData.nombres?.trim() || !userData.apellidos?.trim()) {
         setMessage('Nombre y apellido son obligatorios');
         setMessageType('error');
         return;
@@ -170,10 +171,10 @@ const Profile = () => {
         idusuario: userData.idusuario,
         nombres: userData.nombres.trim(),
         apellidos: userData.apellidos.trim(),
-        telefono: userData.telefono.trim() || null,
+        telefono: userData.telefono?.trim() || null,
         idcarrera: userData.idcarrera ? parseInt(userData.idcarrera) : null,
-        tipodocumento: userData.tipodocumento.trim() || null,
-        numdocumento: userData.numdocumento.trim() || null
+        tipodocumento: userData.tipodocumento?.trim() || null,
+        numdocumento: userData.numdocumento?.trim() || null
       };
 
       console.log('Enviando datos de actualización:', updateData);
@@ -197,7 +198,7 @@ const Profile = () => {
       if (data.success) {
         // Actualizar sessionStorage con los nuevos datos
         const updatedUserData = {
-          ...JSON.parse(sessionStorage.getItem('userData')),
+          ...JSON.parse(sessionStorage.getItem('userData') || '{}'),
           ...updateData
         };
         sessionStorage.setItem('userData', JSON.stringify(updatedUserData));
@@ -277,7 +278,7 @@ const Profile = () => {
 
         // Actualizar sessionStorage
         const updatedUserData = {
-          ...JSON.parse(sessionStorage.getItem('userData')),
+          ...JSON.parse(sessionStorage.getItem('userData') || '{}'),
           saldo: data.data.saldo
         };
         sessionStorage.setItem('userData', JSON.stringify(updatedUserData));
@@ -306,30 +307,35 @@ const Profile = () => {
     }
   };
 
-  // Obtener nombre de la carrera
+  // Obtener nombre de la carrera CON VALIDACIÓN
   const getCarreraNombre = () => {
     if (!userData.idcarrera) return 'No especificada';
     const carrera = carreras.find(c => c.idcarrera === parseInt(userData.idcarrera));
     return carrera ? carrera.nombre : 'No especificada';
   };
 
-  // Obtener nombre del tipo de usuario
+  // Obtener nombre del tipo de usuario CON VALIDACIÓN
   const getTipoUsuarioNombre = () => {
     if (!userData.idtipousuario) return 'No especificado';
     const tipo = tiposUsuario.find(t => t.idtipousuario === parseInt(userData.idtipousuario));
     return tipo ? tipo.nombre : 'No especificado';
   };
 
-  // Formatear fecha
+  // Formatear fecha CON VALIDACIÓN ROBUSTA
   const formatDate = (dateString) => {
     if (!dateString) return 'Fecha no disponible';
     try {
-      return new Date(dateString).toLocaleDateString('es-ES', {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return 'Fecha no disponible';
+      }
+      return date.toLocaleDateString('es-ES', {
         year: 'numeric',
         month: 'long',
         day: 'numeric'
       });
     } catch (error) {
+      console.error('Error formateando fecha:', error);
       return 'Fecha no disponible';
     }
   };
@@ -375,13 +381,13 @@ const Profile = () => {
           <div className="profile-header">
             <div className="profile-avatar">
               <div className="avatar-circle">
-                {userData.nombres?.charAt(0)}{userData.apellidos?.charAt(0)}
+                {(userData.nombres?.charAt(0) || '')}{(userData.apellidos?.charAt(0) || '')}
               </div>
             </div>
             <div className="profile-title">
-              <h1>{userData.nombres} {userData.apellidos}</h1>
+              <h1>{userData.nombres || ''} {userData.apellidos || ''}</h1>
               <p className="profile-role">{getTipoUsuarioNombre()}</p>
-              <p className="profile-email">{userData.correo}</p>
+              <p className="profile-email">{userData.correo || ''}</p>
               <div className="profile-saldo">
                 <strong>Saldo disponible:</strong> {formatSaldo(userData.saldo)}
                 <button 
@@ -503,7 +509,7 @@ const Profile = () => {
   );
 };
 
-// Componente para la sección de perfil
+// Componente para la sección de perfil CON VALIDACIONES
 const PerfilSection = ({ 
   userData, 
   isEditing, 
@@ -530,12 +536,12 @@ const PerfilSection = ({
             <input
               type="text"
               name="nombres"
-              value={userData.nombres}
+              value={userData.nombres || ''}
               onChange={handleChange}
               required
             />
           ) : (
-            <span>{userData.nombres}</span>
+            <span>{userData.nombres || 'No especificado'}</span>
           )}
         </div>
 
@@ -545,18 +551,18 @@ const PerfilSection = ({
             <input
               type="text"
               name="apellidos"
-              value={userData.apellidos}
+              value={userData.apellidos || ''}
               onChange={handleChange}
               required
             />
           ) : (
-            <span>{userData.apellidos}</span>
+            <span>{userData.apellidos || 'No especificado'}</span>
           )}
         </div>
 
         <div className="info-row">
           <label>Correo Electrónico</label>
-          <span className="readonly-field">{userData.correo}</span>
+          <span className="readonly-field">{userData.correo || 'No especificado'}</span>
         </div>
 
         <div className="info-row">
@@ -591,7 +597,7 @@ const PerfilSection = ({
             <input
               type="tel"
               name="telefono"
-              value={userData.telefono}
+              value={userData.telefono || ''}
               onChange={handleChange}
               placeholder="3001234567"
             />
@@ -605,7 +611,7 @@ const PerfilSection = ({
           {isEditing ? (
             <select
               name="tipodocumento"
-              value={userData.tipodocumento}
+              value={userData.tipodocumento || ''}
               onChange={handleChange}
             >
               <option value="">Seleccionar</option>
@@ -625,7 +631,7 @@ const PerfilSection = ({
             <input
               type="text"
               name="numdocumento"
-              value={userData.numdocumento}
+              value={userData.numdocumento || ''}
               onChange={handleChange}
               placeholder="123456789"
             />
@@ -643,7 +649,7 @@ const PerfilSection = ({
           {isEditing ? (
             <select
               name="idcarrera"
-              value={userData.idcarrera}
+              value={userData.idcarrera || ''}
               onChange={handleChange}
             >
               <option value="">Selecciona tu carrera</option>
