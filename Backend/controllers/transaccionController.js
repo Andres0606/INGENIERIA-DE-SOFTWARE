@@ -261,3 +261,117 @@ export const obtenerHistorial = async (req, res) => {
     });
   }
 };
+// Obtener historial de ventas para emprendedor
+// En transaccionController.js
+// En transaccionController.js
+export const obtenerHistorialVentas = async (req, res) => {
+  try {
+    const { idvendedor } = req.params;
+
+    console.log('Obteniendo historial de ventas para vendedor:', idvendedor);
+
+    // PRIMERO: Obtener el saldo actualizado del vendedor
+    const { data: vendedor, error: errorVendedor } = await supabase
+      .from('usuario')
+      .select('saldo, nombres, apellidos')
+      .eq('idusuario', idvendedor)
+      .single();
+
+    if (errorVendedor) throw errorVendedor;
+
+    // LUEGO: Obtener las ventas
+    const { data: ventas, error } = await supabase
+      .from('transaccion')
+      .select(`
+        *,
+        comprador:idcomprador (nombres, apellidos, correo),
+        producto:idproducto (
+          nombre,
+          precio,
+          emprendimiento:idemprendimiento (nombre)
+        )
+      `)
+      .eq('idvendedor', idvendedor)
+      .order('fecha_transaccion', { ascending: false });
+
+    if (error) throw error;
+
+    console.log(`Encontradas ${ventas.length} ventas`);
+
+    // Calcular estadísticas
+    const estadisticas = {
+      totalVentas: ventas.length,
+      ingresosTotales: ventas.reduce((sum, venta) => sum + parseFloat(venta.monto_total), 0),
+      productosVendidos: ventas.reduce((sum, venta) => sum + venta.cantidad, 0),
+      saldoActual: vendedor.saldo || 0  // 👈 Incluir saldo actual
+    };
+
+    res.json({
+      success: true,
+      data: {
+        ventas,
+        estadisticas,
+        saldoActual: vendedor.saldo || 0  // 👈 Para que el frontend lo use
+      }
+    });
+
+  } catch (error) {
+    console.error('Error en obtener historial de ventas:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor',
+      error: error.message
+    });
+  }
+};
+
+// Obtener historial de compras para usuario
+export const obtenerHistorialCompras = async (req, res) => {
+  try {
+    const { idcomprador } = req.params;
+
+    console.log('Obteniendo historial de compras para comprador:', idcomprador);
+
+    const { data: compras, error } = await supabase
+      .from('transaccion')
+      .select(`
+        *,
+        vendedor:idvendedor (nombres, apellidos, correo),
+        producto:idproducto (
+          nombre,
+          precio,
+          descripcion,
+          emprendimiento:idemprendimiento (nombre, usuario:idusuario (telefono))
+        )
+      `)
+      .eq('idcomprador', idcomprador)
+      .order('fecha_transaccion', { ascending: false });
+
+    if (error) throw error;
+
+    console.log(`Encontradas ${compras.length} compras`);
+
+    // Calcular estadísticas
+    const estadisticas = {
+      totalCompras: compras.length,
+      totalGastado: compras.reduce((sum, compra) => sum + parseFloat(compra.monto_total), 0),
+      productosComprados: compras.reduce((sum, compra) => sum + compra.cantidad, 0)
+    };
+
+    res.json({
+      success: true,
+      data: {
+        compras,
+        estadisticas
+      }
+    });
+
+  } catch (error) {
+    console.error('Error en obtener historial de compras:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor',
+      error: error.message
+    });
+  }
+};

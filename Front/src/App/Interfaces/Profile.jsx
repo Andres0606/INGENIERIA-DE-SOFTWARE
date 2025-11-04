@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import '../../Components/Profile.css';
 import Header from '../Header-footer/Header.jsx';
 import Footer from '../Header-footer/Footer.jsx';
+import HistorialComprasSection from './HistorialComprasSection.jsx';
+import HistorialVentasSection from './HistorialVentasSection.jsx';
+import FavoritosSection from './FavoritosSection.jsx';
 
 const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -33,36 +36,87 @@ const Profile = () => {
   const [activeSection, setActiveSection] = useState('perfil');
   const navigate = useNavigate();
 
-  // Cargar datos del usuario desde sessionStorage
-  useEffect(() => {
-    const loadUserData = () => {
-      const storedUserData = sessionStorage.getItem('userData');
-      if (storedUserData) {
-        const user = JSON.parse(storedUserData);
-        const userDataFormatted = {
-          idusuario: user.idusuario || '',
-          nombres: user.nombres || '',
-          apellidos: user.apellidos || '',
-          correo: user.correo || '',
-          telefono: user.telefono || '',
-          idcarrera: user.idcarrera || '',
-          idtipousuario: user.idtipousuario || '',
-          fecharegistro: user.fecharegistro || '',
-          tipodocumento: user.tipodocumento || '',
-          numdocumento: user.numdocumento || '',
-          saldo: user.saldo || 0
-        };
-        
-        setUserData(userDataFormatted);
-        setOriginalData(userDataFormatted);
-      }
-      setLoading(false);
-    };
+  // Función para cargar datos del usuario
+  const loadUserData = () => {
+    const storedUserData = sessionStorage.getItem('userData');
+    if (storedUserData) {
+      const user = JSON.parse(storedUserData);
+      const userDataFormatted = {
+        idusuario: user.idusuario || '',
+        nombres: user.nombres || '',
+        apellidos: user.apellidos || '',
+        correo: user.correo || '',
+        telefono: user.telefono || '',
+        idcarrera: user.idcarrera || '',
+        idtipousuario: user.idtipousuario || '',
+        fecharegistro: user.fecharegistro || '',
+        tipodocumento: user.tipodocumento || '',
+        numdocumento: user.numdocumento || '',
+        saldo: user.saldo || 0
+      };
+      
+      setUserData(userDataFormatted);
+      setOriginalData(userDataFormatted);
+    }
+    setLoading(false);
+  };
 
+  // Función para actualizar saldo desde sessionStorage
+  const actualizarSaldoDesdeStorage = () => {
+    const storedUserData = sessionStorage.getItem('userData');
+    if (storedUserData) {
+      const user = JSON.parse(storedUserData);
+      setUserData(prev => ({
+        ...prev,
+        saldo: user.saldo || 0
+      }));
+      console.log('✅ Saldo actualizado en Profile:', user.saldo);
+    }
+  };
+
+  // Cargar datos del usuario desde sessionStorage Y escuchar cambios
+  useEffect(() => {
     loadUserData();
     loadCarreras();
     loadTiposUsuario();
-  }, []);
+
+    // 👇 ESCUCHAR CAMBIOS EN EL SESSION STORAGE
+    const handleStorageChange = () => {
+      console.log('🔄 SessionStorage cambió, actualizando Profile...');
+      loadUserData();
+    };
+
+    // Escuchar cambios en sessionStorage
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Escuchar evento personalizado de actualización de saldo
+    const handleUserDataUpdated = () => {
+      console.log('🔄 UserData actualizado, sincronizando Profile...');
+      actualizarSaldoDesdeStorage();
+    };
+
+    window.addEventListener('userDataUpdated', handleUserDataUpdated);
+    
+    // También verificar cada 3 segundos (para cambios dentro de la misma pestaña)
+    const interval = setInterval(() => {
+      const currentUserData = JSON.parse(sessionStorage.getItem('userData') || '{}');
+      if (currentUserData.saldo !== userData.saldo) {
+        console.log('🔄 Saldo cambió detectado, actualizando...');
+        actualizarSaldoDesdeStorage();
+      }
+    }, 3000);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('userDataUpdated', handleUserDataUpdated);
+      clearInterval(interval);
+    };
+  }, [userData.saldo]);
+
+  // Actualizar saldo cuando se cambia de sección
+  useEffect(() => {
+    actualizarSaldoDesdeStorage();
+  }, [activeSection]);
 
   // Cargar carreras desde el backend
   const loadCarreras = async () => {
@@ -186,7 +240,6 @@ const Profile = () => {
   };
 
   const handleChangePassword = () => {
-    // Aquí puedes implementar el cambio de contraseña
     alert('Funcionalidad de cambio de contraseña en desarrollo');
   };
 
@@ -229,12 +282,15 @@ const Profile = () => {
         };
         sessionStorage.setItem('userData', JSON.stringify(updatedUserData));
 
+        // Notificar a otros componentes
+        window.dispatchEvent(new Event('storage'));
+        window.dispatchEvent(new Event('userDataUpdated'));
+
         setMessage(`✅ ${data.message}`);
         setMessageType('success');
         setShowRecargaModal(false);
         setMontoRecarga('');
         
-        // Recargar después de 2 segundos
         setTimeout(() => {
           window.location.reload();
         }, 2000);
@@ -328,6 +384,19 @@ const Profile = () => {
               <p className="profile-email">{userData.correo}</p>
               <div className="profile-saldo">
                 <strong>Saldo disponible:</strong> {formatSaldo(userData.saldo)}
+                <button 
+                  onClick={actualizarSaldoDesdeStorage}
+                  title="Actualizar saldo"
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    marginLeft: '10px',
+                    fontSize: '0.8em'
+                  }}
+                >
+                  🔄
+                </button>
               </div>
             </div>
             {!isEditing && activeSection === 'perfil' && (
@@ -345,6 +414,23 @@ const Profile = () => {
             >
               👤 Información Personal
             </button>
+            
+            <button 
+              className={`nav-btn ${activeSection === 'compras' ? 'active' : ''}`}
+              onClick={() => setActiveSection('compras')}
+            >
+              🛒 Mis Compras
+            </button>
+            
+            {userData.idtipousuario === 2 && (
+              <button 
+                className={`nav-btn ${activeSection === 'ventas' ? 'active' : ''}`}
+                onClick={() => setActiveSection('ventas')}
+              >
+                💰 Mis Ventas
+              </button>
+            )}
+            
             <button 
               className={`nav-btn ${activeSection === 'favoritos' ? 'active' : ''}`}
               onClick={() => setActiveSection('favoritos')}
@@ -355,164 +441,31 @@ const Profile = () => {
 
           {/* Sección de Información Personal */}
           {activeSection === 'perfil' && (
-            <div className="profile-info">
-              <div className="info-section">
-                <h2>Información Personal</h2>
-                
-                <div className="info-row">
-                  <label>Nombre *</label>
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      name="nombres"
-                      value={userData.nombres}
-                      onChange={handleChange}
-                      required
-                    />
-                  ) : (
-                    <span>{userData.nombres}</span>
-                  )}
-                </div>
+            <PerfilSection 
+              userData={userData}
+              isEditing={isEditing}
+              carreras={carreras}
+              handleChange={handleChange}
+              handleSave={handleSave}
+              handleCancel={handleCancel}
+              saving={saving}
+              getCarreraNombre={getCarreraNombre}
+              getTipoUsuarioNombre={getTipoUsuarioNombre}
+              formatDate={formatDate}
+              formatSaldo={formatSaldo}
+              setShowRecargaModal={setShowRecargaModal}
+              actualizarSaldoDesdeStorage={actualizarSaldoDesdeStorage}
+            />
+          )}
 
-                <div className="info-row">
-                  <label>Apellido *</label>
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      name="apellidos"
-                      value={userData.apellidos}
-                      onChange={handleChange}
-                      required
-                    />
-                  ) : (
-                    <span>{userData.apellidos}</span>
-                  )}
-                </div>
+          {/* Sección de Compras */}
+          {activeSection === 'compras' && (
+            <HistorialComprasSection userId={userData.idusuario} />
+          )}
 
-                <div className="info-row">
-                  <label>Correo Electrónico</label>
-                  <span className="readonly-field">{userData.correo}</span>
-                </div>
-
-                <div className="info-row">
-                  <label>Saldo Disponible</label>
-                  <div className="saldo-section">
-                    <span className="saldo-amount">
-                      {formatSaldo(userData.saldo)}
-                    </span>
-                    <button 
-                      className="btn-recargar"
-                      onClick={() => setShowRecargaModal(true)}
-                      type="button"
-                    >
-                      💰 Recargar Saldo
-                    </button>
-                  </div>
-                </div>
-
-                <div className="info-row">
-                  <label>Teléfono</label>
-                  {isEditing ? (
-                    <input
-                      type="tel"
-                      name="telefono"
-                      value={userData.telefono}
-                      onChange={handleChange}
-                      placeholder="3001234567"
-                    />
-                  ) : (
-                    <span>{userData.telefono || 'No especificado'}</span>
-                  )}
-                </div>
-
-                <div className="info-row">
-                  <label>Tipo de Documento</label>
-                  {isEditing ? (
-                    <select
-                      name="tipodocumento"
-                      value={userData.tipodocumento}
-                      onChange={handleChange}
-                    >
-                      <option value="">Seleccionar</option>
-                      <option value="CC">Cédula de Ciudadanía</option>
-                      <option value="CE">Cédula de Extranjería</option>
-                      <option value="TI">Tarjeta de Identidad</option>
-                      <option value="PA">Pasaporte</option>
-                    </select>
-                  ) : (
-                    <span>{userData.tipodocumento || 'No especificado'}</span>
-                  )}
-                </div>
-
-                <div className="info-row">
-                  <label>Número de Documento</label>
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      name="numdocumento"
-                      value={userData.numdocumento}
-                      onChange={handleChange}
-                      placeholder="123456789"
-                    />
-                  ) : (
-                    <span>{userData.numdocumento || 'No especificado'}</span>
-                  )}
-                </div>
-              </div>
-
-              <div className="info-section">
-                <h2>Información Académica</h2>
-                
-                <div className="info-row">
-                  <label>Carrera</label>
-                  {isEditing ? (
-                    <select
-                      name="idcarrera"
-                      value={userData.idcarrera}
-                      onChange={handleChange}
-                    >
-                      <option value="">Selecciona tu carrera</option>
-                      {carreras.map(carrera => (
-                        <option key={carrera.idcarrera} value={carrera.idcarrera}>
-                          {carrera.nombre}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <span>{getCarreraNombre()}</span>
-                  )}
-                </div>
-
-                <div className="info-row">
-                  <label>Tipo de Usuario</label>
-                  <span className="readonly-field">{getTipoUsuarioNombre()}</span>
-                </div>
-
-                <div className="info-row">
-                  <label>Miembro desde</label>
-                  <span>{formatDate(userData.fecharegistro)}</span>
-                </div>
-              </div>
-
-              {isEditing && (
-                <div className="action-buttons">
-                  <button 
-                    className="save-button" 
-                    onClick={handleSave}
-                    disabled={saving}
-                  >
-                    {saving ? 'Guardando...' : 'Guardar Cambios'}
-                  </button>
-                  <button 
-                    className="cancel-button" 
-                    onClick={handleCancel}
-                    disabled={saving}
-                  >
-                    Cancelar
-                  </button>
-                </div>
-              )}
-            </div>
+          {/* Sección de Ventas */}
+          {activeSection === 'ventas' && userData.idtipousuario === 2 && (
+            <HistorialVentasSection userId={userData.idusuario} />
           )}
 
           {/* Sección de Favoritos */}
@@ -520,7 +473,7 @@ const Profile = () => {
             <FavoritosSection userId={userData.idusuario} />
           )}
 
-          {/* Sección de Seguridad (solo en perfil) */}
+          {/* Sección de Seguridad */}
           {activeSection === 'perfil' && (
             <div className="security-section">
               <h2>Seguridad</h2>
@@ -534,81 +487,15 @@ const Profile = () => {
 
       {/* Modal de Recarga de Saldo */}
       {showRecargaModal && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <div className="modal-header">
-              <h3>Recargar Saldo</h3>
-              <button 
-                className="close-button"
-                onClick={() => {
-                  setShowRecargaModal(false);
-                  setMontoRecarga('');
-                }}
-                disabled={recargando}
-              >
-                ×
-              </button>
-            </div>
-            
-            <div className="modal-content">
-              <div className="saldo-actual">
-                <strong>Saldo actual:</strong> {formatSaldo(userData.saldo)}
-              </div>
-              
-              <div className="form-group">
-                <label>Monto a recargar *</label>
-                <input
-                  type="number"
-                  value={montoRecarga}
-                  onChange={(e) => setMontoRecarga(e.target.value)}
-                  min="1"
-                  step="1000"
-                  placeholder="Ej: 50000"
-                  className="monto-input"
-                  disabled={recargando}
-                />
-                <small>Mínimo: $1.000</small>
-              </div>
-
-              <div className="suggested-amounts">
-                <p>Montos sugeridos:</p>
-                <div className="amount-buttons">
-                  {[10000, 20000, 50000, 100000].map(monto => (
-                    <button
-                      key={monto}
-                      type="button"
-                      className="amount-btn"
-                      onClick={() => setMontoRecarga(monto)}
-                      disabled={recargando}
-                    >
-                      ${monto.toLocaleString()}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="modal-actions">
-              <button 
-                className="btn-primary"
-                onClick={handleRecargarSaldo}
-                disabled={recargando || !montoRecarga || montoRecarga < 1000}
-              >
-                {recargando ? 'Procesando...' : `Recargar ${formatSaldo(montoRecarga)}`}
-              </button>
-              <button 
-                className="btn-secondary"
-                onClick={() => {
-                  setShowRecargaModal(false);
-                  setMontoRecarga('');
-                }}
-                disabled={recargando}
-              >
-                Cancelar
-              </button>
-            </div>
-          </div>
-        </div>
+        <RecargaModal 
+          userData={userData}
+          montoRecarga={montoRecarga}
+          setMontoRecarga={setMontoRecarga}
+          recargando={recargando}
+          handleRecargarSaldo={handleRecargarSaldo}
+          setShowRecargaModal={setShowRecargaModal}
+          formatSaldo={formatSaldo}
+        />
       )}
 
       <Footer />
@@ -616,164 +503,279 @@ const Profile = () => {
   );
 };
 
-// Componente para la sección de favoritos
-const FavoritosSection = ({ userId }) => {
-  const [favoritos, setFavoritos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    if (userId) {
-      fetchFavoritos();
-    }
-  }, [userId]);
-
-  const fetchFavoritos = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(`http://localhost:3000/api/favoritos/usuario/${userId}`);
-      const data = await response.json();
-      
-      if (data.success) {
-        setFavoritos(data.data);
-      } else {
-        throw new Error(data.message || 'Error al cargar favoritos');
-      }
-    } catch (err) {
-      console.error('Error cargando favoritos:', err);
-      setError('Error al cargar favoritos');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const eliminarFavorito = async (idproducto) => {
-    try {
-      const response = await fetch('http://localhost:3000/api/favoritos/eliminar', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          idusuario: userId,
-          idproducto: idproducto
-        }),
-      });
-
-      const data = await response.json();
-      
-      if (data.success) {
-        // Actualizar lista local
-        setFavoritos(prev => prev.filter(fav => fav.idproducto !== idproducto));
-      } else {
-        throw new Error(data.message);
-      }
-    } catch (err) {
-      console.error('Error eliminando favorito:', err);
-      alert('Error al eliminar favorito: ' + err.message);
-    }
-  };
-
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
-      minimumFractionDigits: 0
-    }).format(price);
-  };
-
-  if (loading) {
-    return (
-      <div className="favoritos-section">
-        <h2>Mis Productos Favoritos</h2>
-        <div className="loading-favoritos">Cargando favoritos...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="favoritos-section">
-        <h2>Mis Productos Favoritos</h2>
-        <div className="error-favoritos">
-          <p>{error}</p>
-          <button onClick={fetchFavoritos} className="retry-btn">
-            Reintentar
-          </button>
-        </div>
-      </div>
-    );
-  }
-
+// Componente para la sección de perfil
+const PerfilSection = ({ 
+  userData, 
+  isEditing, 
+  carreras, 
+  handleChange, 
+  handleSave, 
+  handleCancel, 
+  saving, 
+  getCarreraNombre, 
+  getTipoUsuarioNombre, 
+  formatDate, 
+  formatSaldo,
+  setShowRecargaModal,
+  actualizarSaldoDesdeStorage 
+}) => {
   return (
-    <div className="favoritos-section">
-      <h2>Mis Productos Favoritos ({favoritos.length})</h2>
-      
-      {favoritos.length === 0 ? (
-        <div className="empty-favoritos">
-          <div className="empty-icon">❤️</div>
-          <h3>No tienes productos favoritos</h3>
-          <p>Explora el marketplace y agrega productos que te gusten</p>
-          <button 
-            className="btn-explorar"
-            onClick={() => window.location.href = '/productos'}
-          >
-            Explorar Productos
-          </button>
+    <div className="profile-info">
+      <div className="info-section">
+        <h2>Información Personal</h2>
+        
+        <div className="info-row">
+          <label>Nombre *</label>
+          {isEditing ? (
+            <input
+              type="text"
+              name="nombres"
+              value={userData.nombres}
+              onChange={handleChange}
+              required
+            />
+          ) : (
+            <span>{userData.nombres}</span>
+          )}
         </div>
-      ) : (
-        <div className="favoritos-grid">
-          {favoritos.map((favorito) => (
-            <div key={favorito.idfavoritoproducto} className="favorito-card">
-              <div className="favorito-header">
-                <h3>{favorito.producto.nombre}</h3>
-                <button 
-                  className="btn-eliminar-favorito"
-                  onClick={() => eliminarFavorito(favorito.idproducto)}
-                  title="Eliminar de favoritos"
-                >
-                  ❌
-                </button>
-              </div>
-              
-              <p className="favorito-descripcion">
-                {favorito.producto.descripcion || 'Sin descripción'}
-              </p>
-              
-              <div className="favorito-info">
-                <div className="favorito-precio">
-                  {formatPrice(favorito.producto.precio)}
-                </div>
-                <div className="favorito-emprendimiento">
-                  <strong>Emprendimiento:</strong> {favorito.producto.emprendimiento.nombre}
-                </div>
-                <div className="favorito-categoria">
-                  <strong>Categoría:</strong> {favorito.producto.emprendimiento.categoria.nombre}
-                </div>
-                <div className="favorito-emprendedor">
-                  <strong>Emprendedor:</strong> {favorito.producto.emprendimiento.usuario.nombres} {favorito.producto.emprendimiento.usuario.apellidos}
-                </div>
-              </div>
-              
-              <div className="favorito-actions">
-                <button className="btn-contactar">
-                  📧 Contactar
-                </button>
-                <button 
-                  className="btn-comprar"
-                  onClick={() => window.location.href = '/productos'}
-                >
-                  🛒 Comprar
-                </button>
-              </div>
-              
-              <div className="favorito-fecha">
-                Agregado el: {new Date(favorito.fechamarcado).toLocaleDateString('es-ES')}
-              </div>
+
+        <div className="info-row">
+          <label>Apellido *</label>
+          {isEditing ? (
+            <input
+              type="text"
+              name="apellidos"
+              value={userData.apellidos}
+              onChange={handleChange}
+              required
+            />
+          ) : (
+            <span>{userData.apellidos}</span>
+          )}
+        </div>
+
+        <div className="info-row">
+          <label>Correo Electrónico</label>
+          <span className="readonly-field">{userData.correo}</span>
+        </div>
+
+        <div className="info-row">
+          <label>Saldo Disponible</label>
+          <div className="saldo-section">
+            <span className="saldo-amount">
+              {formatSaldo(userData.saldo)}
+            </span>
+            <div className="saldo-buttons">
+              <button 
+                className="btn-recargar"
+                onClick={() => setShowRecargaModal(true)}
+                type="button"
+              >
+                💰 Recargar Saldo
+              </button>
+              <button 
+                className="btn-actualizar-saldo"
+                onClick={actualizarSaldoDesdeStorage}
+                type="button"
+                title="Actualizar saldo"
+              >
+                🔄
+              </button>
             </div>
-          ))}
+          </div>
+        </div>
+
+        <div className="info-row">
+          <label>Teléfono</label>
+          {isEditing ? (
+            <input
+              type="tel"
+              name="telefono"
+              value={userData.telefono}
+              onChange={handleChange}
+              placeholder="3001234567"
+            />
+          ) : (
+            <span>{userData.telefono || 'No especificado'}</span>
+          )}
+        </div>
+
+        <div className="info-row">
+          <label>Tipo de Documento</label>
+          {isEditing ? (
+            <select
+              name="tipodocumento"
+              value={userData.tipodocumento}
+              onChange={handleChange}
+            >
+              <option value="">Seleccionar</option>
+              <option value="CC">Cédula de Ciudadanía</option>
+              <option value="CE">Cédula de Extranjería</option>
+              <option value="TI">Tarjeta de Identidad</option>
+              <option value="PA">Pasaporte</option>
+            </select>
+          ) : (
+            <span>{userData.tipodocumento || 'No especificado'}</span>
+          )}
+        </div>
+
+        <div className="info-row">
+          <label>Número de Documento</label>
+          {isEditing ? (
+            <input
+              type="text"
+              name="numdocumento"
+              value={userData.numdocumento}
+              onChange={handleChange}
+              placeholder="123456789"
+            />
+          ) : (
+            <span>{userData.numdocumento || 'No especificado'}</span>
+          )}
+        </div>
+      </div>
+
+      <div className="info-section">
+        <h2>Información Académica</h2>
+        
+        <div className="info-row">
+          <label>Carrera</label>
+          {isEditing ? (
+            <select
+              name="idcarrera"
+              value={userData.idcarrera}
+              onChange={handleChange}
+            >
+              <option value="">Selecciona tu carrera</option>
+              {carreras.map(carrera => (
+                <option key={carrera.idcarrera} value={carrera.idcarrera}>
+                  {carrera.nombre}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <span>{getCarreraNombre()}</span>
+          )}
+        </div>
+
+        <div className="info-row">
+          <label>Tipo de Usuario</label>
+          <span className="readonly-field">{getTipoUsuarioNombre()}</span>
+        </div>
+
+        <div className="info-row">
+          <label>Miembro desde</label>
+          <span>{formatDate(userData.fecharegistro)}</span>
+        </div>
+      </div>
+
+      {isEditing && (
+        <div className="action-buttons">
+          <button 
+            className="save-button" 
+            onClick={handleSave}
+            disabled={saving}
+          >
+            {saving ? 'Guardando...' : 'Guardar Cambios'}
+          </button>
+          <button 
+            className="cancel-button" 
+            onClick={handleCancel}
+            disabled={saving}
+          >
+            Cancelar
+          </button>
         </div>
       )}
+    </div>
+  );
+};
+
+// Componente para el modal de recarga
+const RecargaModal = ({ 
+  userData, 
+  montoRecarga, 
+  setMontoRecarga, 
+  recargando, 
+  handleRecargarSaldo, 
+  setShowRecargaModal, 
+  formatSaldo 
+}) => {
+  return (
+    <div className="modal-overlay">
+      <div className="modal">
+        <div className="modal-header">
+          <h3>Recargar Saldo</h3>
+          <button 
+            className="close-button"
+            onClick={() => {
+              setShowRecargaModal(false);
+              setMontoRecarga('');
+            }}
+            disabled={recargando}
+          >
+            ×
+          </button>
+        </div>
+        
+        <div className="modal-content">
+          <div className="saldo-actual">
+            <strong>Saldo actual:</strong> {formatSaldo(userData.saldo)}
+          </div>
+          
+          <div className="form-group">
+            <label>Monto a recargar *</label>
+            <input
+              type="number"
+              value={montoRecarga}
+              onChange={(e) => setMontoRecarga(e.target.value)}
+              min="1"
+              step="1000"
+              placeholder="Ej: 50000"
+              className="monto-input"
+              disabled={recargando}
+            />
+            <small>Mínimo: $1.000</small>
+          </div>
+
+          <div className="suggested-amounts">
+            <p>Montos sugeridos:</p>
+            <div className="amount-buttons">
+              {[10000, 20000, 50000, 100000].map(monto => (
+                <button
+                  key={monto}
+                  type="button"
+                  className="amount-btn"
+                  onClick={() => setMontoRecarga(monto)}
+                  disabled={recargando}
+                >
+                  ${monto.toLocaleString()}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="modal-actions">
+          <button 
+            className="btn-primary"
+            onClick={handleRecargarSaldo}
+            disabled={recargando || !montoRecarga || montoRecarga < 1000}
+          >
+            {recargando ? 'Procesando...' : `Recargar ${formatSaldo(montoRecarga)}`}
+          </button>
+          <button 
+            className="btn-secondary"
+            onClick={() => {
+              setShowRecargaModal(false);
+              setMontoRecarga('');
+            }}
+            disabled={recargando}
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
