@@ -132,24 +132,6 @@ const Login = () => {
           Volver al menú
         </button>
 
-        {/* Botón de prueba de conexión */}
-        <button 
-          onClick={testConnection}
-          style={{
-            background: '#ff6b6b',
-            color: 'white',
-            border: 'none',
-            padding: '8px 16px',
-            borderRadius: '5px',
-            cursor: 'pointer',
-            marginBottom: '20px',
-            fontSize: '12px',
-            width: '100%'
-          }}
-        >
-          Probar Conexión Backend
-        </button>
-
         <div className="login-card">
           <div className="login-header">
             <div className="login-logo">

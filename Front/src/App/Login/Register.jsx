@@ -125,23 +125,6 @@ const Register = () => {
           ← Volver al menú
         </button>
 
-        {/* Botón para probar conexión - puedes quitarlo después */}
-        <button 
-          onClick={testConnection}
-          style={{
-            background: '#ff6b6b',
-            color: 'white',
-            border: 'none',
-            padding: '8px 16px',
-            borderRadius: '5px',
-            cursor: 'pointer',
-            marginBottom: '10px',
-            fontSize: '12px'
-          }}
-        >
-          Probar Conexión Backend
-        </button>
-
         <div className="register-header">
           <div className="register-logo">U</div>
           <div className="register-title">
@@ -306,19 +289,6 @@ const Register = () => {
           <p className="register-login-link">
             ¿Ya tienes cuenta? <Link to="/login">Inicia sesión aquí</Link>
           </p>
-
-          <div className="register-divider">
-            <span>O regístrate con</span>
-          </div>
-
-          <div className="register-social">
-            <button type="button" className="social-btn google">
-              <span>Google</span>
-            </button>
-            <button type="button" className="social-btn microsoft">
-              <span>Microsoft</span>
-            </button>
-          </div>
         </form>
       </div>
     </div>
