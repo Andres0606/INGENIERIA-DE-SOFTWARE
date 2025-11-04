@@ -6,6 +6,7 @@ import emprendimientoRoutes from './routes/emprendimientoRoutes.js'
 import productoRoutes from './routes/productoRoutes.js'
 import categoriaRoutes from './routes/categoriaRoutes.js'
 import favoritoRoutes from './routes/favoritoRoutes.js'
+import transaccionRoutes from './routes/transaccionRoutes.js'
 
 const app = express()
 const PORT = process.env.PORT || 3000
@@ -20,6 +21,7 @@ app.use('/api/emprendimientos', emprendimientoRoutes)
 app.use('/api/productos', productoRoutes)
 app.use('/api/categorias', categoriaRoutes)
 app.use('/api/favoritos', favoritoRoutes)
+app.use('/api/transacciones', transaccionRoutes)
 
 // Ruta de prueba
 app.get('/', (req, res) => {

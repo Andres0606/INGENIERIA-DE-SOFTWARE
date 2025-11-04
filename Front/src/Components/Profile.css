@@ -510,3 +510,132 @@
     flex-direction: column;
   }
 }
+/* Estilos para la sección de saldo */
+.profile-saldo {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #e8f5e8;
+  border-radius: 6px;
+  border: 1px solid #4caf50;
+  font-size: 0.95em;
+}
+
+.saldo-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 15px;
+}
+
+.saldo-amount {
+  font-size: 1.2em;
+  font-weight: bold;
+  color: #2e7d32;
+  flex: 1;
+}
+
+.btn-recargar {
+  background: #4CAF50;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9em;
+  white-space: nowrap;
+  transition: background-color 0.3s;
+}
+
+.btn-recargar:hover {
+  background: #45a049;
+}
+
+.btn-recargar:disabled {
+  background: #cccccc;
+  cursor: not-allowed;
+}
+
+/* Estilos para el modal de recarga */
+.saldo-actual {
+  background: #e8f5e8;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  text-align: center;
+  border: 1px solid #4caf50;
+  font-size: 1.1em;
+}
+
+.monto-input {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  font-size: 1.1em;
+  margin-bottom: 5px;
+}
+
+.monto-input:focus {
+  border-color: #4CAF50;
+  outline: none;
+}
+
+.suggested-amounts {
+  margin: 20px 0;
+  padding: 15px;
+  background: #f9f9f9;
+  border-radius: 6px;
+}
+
+.suggested-amounts p {
+  margin-bottom: 10px;
+  font-weight: 600;
+  color: #333;
+}
+
+.amount-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.amount-btn {
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 0.9em;
+}
+
+.amount-btn:hover {
+  background: #f5f5f5;
+  border-color: #4CAF50;
+  transform: translateY(-1px);
+}
+
+.amount-btn:disabled {
+  background: #f0f0f0;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .saldo-section {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  
+  .btn-recargar {
+    width: 100%;
+  }
+  
+  .amount-buttons {
+    grid-template-columns: 1fr;
+  }
+}

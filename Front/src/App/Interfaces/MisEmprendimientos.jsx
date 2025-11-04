@@ -14,6 +14,8 @@ const MisEmprendimientos = () => {
   const [selectedEmprendimiento, setSelectedEmprendimiento] = useState(null);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
+  const [editingStock, setEditingStock] = useState(null);
+  const [nuevoStock, setNuevoStock] = useState('');
   const navigate = useNavigate();
 
   // Estados para formularios
@@ -26,7 +28,8 @@ const MisEmprendimientos = () => {
   const [productoForm, setProductoForm] = useState({
     nombre: '',
     descripcion: '',
-    precio: ''
+    precio: '',
+    stock: 0 // 👈 Agregar stock al formulario
   });
 
   const userData = JSON.parse(sessionStorage.getItem('userData') || '{}');
@@ -160,7 +163,8 @@ const MisEmprendimientos = () => {
         idemprendimiento: selectedEmprendimiento,
         nombre: productoForm.nombre,
         descripcion: productoForm.descripcion,
-        precio: parseFloat(productoForm.precio)
+        precio: parseFloat(productoForm.precio),
+        stock: parseInt(productoForm.stock) // 👈 Incluir stock
       };
 
       const response = await fetch('http://localhost:3000/api/productos', {
@@ -177,7 +181,7 @@ const MisEmprendimientos = () => {
         setMessage('Producto agregado exitosamente');
         setMessageType('success');
         setShowProductForm(false);
-        setProductoForm({ nombre: '', descripcion: '', precio: '' });
+        setProductoForm({ nombre: '', descripcion: '', precio: '', stock: 0 });
         loadProductos(selectedEmprendimiento); // Recargar productos
       } else {
         throw new Error(data.message || 'Error al agregar producto');
@@ -185,6 +189,35 @@ const MisEmprendimientos = () => {
     } catch (error) {
       console.error('Error agregando producto:', error);
       setMessage(error.message || 'Error al agregar producto');
+      setMessageType('error');
+    }
+  };
+
+  // Función para actualizar stock
+  const actualizarStock = async (idproducto, nuevoStock, idEmprendimiento) => {
+    try {
+      const response = await fetch(`http://localhost:3000/api/productos/${idproducto}/stock`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ stock: parseInt(nuevoStock) }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setMessage('Stock actualizado correctamente');
+        setMessageType('success');
+        setEditingStock(null);
+        setNuevoStock('');
+        loadProductos(idEmprendimiento); // Recargar productos del emprendimiento
+      } else {
+        throw new Error(data.message);
+      }
+    } catch (err) {
+      console.error('Error actualizando stock:', err);
+      setMessage('Error al actualizar stock');
       setMessageType('error');
     }
   };
@@ -307,8 +340,54 @@ const MisEmprendimientos = () => {
                           <div key={producto.idproducto} className="producto-card">
                             <h5>{producto.nombre}</h5>
                             <p>{producto.descripcion}</p>
-                            <div className="producto-precio">
-                              ${producto.precio.toLocaleString()}
+                            <div className="producto-info">
+                              <div className="producto-precio">
+                                ${producto.precio.toLocaleString()}
+                              </div>
+                              
+                              {/* Gestión de Stock */}
+                              <div className="producto-stock">
+                                {editingStock === producto.idproducto ? (
+                                  <div className="stock-editor">
+                                    <input
+                                      type="number"
+                                      value={nuevoStock}
+                                      onChange={(e) => setNuevoStock(e.target.value)}
+                                      min="0"
+                                      placeholder="Nuevo stock"
+                                      className="stock-input"
+                                    />
+                                    <button 
+                                      onClick={() => actualizarStock(producto.idproducto, nuevoStock, emprendimiento.idemprendimiento)}
+                                      className="btn-stock-confirm"
+                                    >
+                                      ✅
+                                    </button>
+                                    <button 
+                                      onClick={() => setEditingStock(null)}
+                                      className="btn-stock-cancel"
+                                    >
+                                      ❌
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <div className="stock-info">
+                                    <span className={`stock-badge ${producto.stock === 0 ? 'agotado' : 'disponible'}`}>
+                                      Stock: {producto.stock}
+                                    </span>
+                                    <button 
+                                      onClick={() => {
+                                        setEditingStock(producto.idproducto);
+                                        setNuevoStock(producto.stock);
+                                      }}
+                                      className="btn-edit-stock"
+                                      title="Editar stock"
+                                    >
+                                      ✏️
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </div>
                         ))}
@@ -446,6 +525,17 @@ const MisEmprendimientos = () => {
                       min="0"
                       step="0.01"
                       placeholder="0.00"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Stock Inicial</label>
+                    <input
+                      type="number"
+                      name="stock"
+                      value={productoForm.stock}
+                      onChange={handleProductoChange}
+                      min="0"
+                      placeholder="0"
                     />
                   </div>
                   <div className="form-actions">

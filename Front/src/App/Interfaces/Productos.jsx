@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom'; // 👈 Agregar esta importación
 import '../../Components/Productos.css';
 import Header from '../Header-footer/Header.jsx';
 import Footer from '../Header-footer/Footer.jsx';
@@ -11,7 +12,8 @@ const Productos = () => {
   const [favoritos, setFavoritos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
+  
+  const navigate = useNavigate(); // 👈 Agregar esto
   const userData = JSON.parse(sessionStorage.getItem('userData') || '{}');
 
   // Cargar productos, categorías y favoritos
@@ -122,6 +124,69 @@ const Productos = () => {
     } catch (err) {
       console.error('Error gestionando favorito:', err);
       alert('Error al gestionar favorito: ' + err.message);
+    }
+  };
+
+  // Función de compra
+  const handleComprar = async (producto) => {
+    if (!userData.idusuario) {
+      alert('Debes iniciar sesión para comprar productos');
+      navigate('/login');
+      return;
+    }
+
+    // Si no hay stock
+    if (producto.stock === 0) {
+      alert('❌ Este producto está agotado');
+      return;
+    }
+
+    // Pedir cantidad
+    const cantidad = parseInt(prompt(`¿Cuántas unidades de "${producto.nombre}" deseas comprar?\nStock disponible: ${producto.stock}`, '1'));
+    
+    if (!cantidad || cantidad < 1) {
+      return;
+    }
+
+    if (cantidad > producto.stock) {
+      alert(`❌ Stock insuficiente. Solo quedan ${producto.stock} unidades`);
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:3000/api/transacciones/comprar', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          idcomprador: userData.idusuario,
+          idproducto: producto.idproducto,
+          cantidad: cantidad
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert(`✅ ${data.message}\nSaldo restante: $${data.data.saldo_restante}`);
+        
+        // Recargar productos para actualizar stock
+        fetchProductos();
+        
+        // Actualizar saldo en sessionStorage
+        const updatedUserData = {
+          ...userData,
+          saldo: data.data.saldo_restante
+        };
+        sessionStorage.setItem('userData', JSON.stringify(updatedUserData));
+        
+      } else {
+        alert(`❌ ${data.message}`);
+      }
+    } catch (err) {
+      console.error('Error en compra:', err);
+      alert('Error al procesar la compra');
     }
   };
 
@@ -313,6 +378,13 @@ const Productos = () => {
                     </span>
                   </div>
 
+                  {/* Stock */}
+                  <div className="producto-stock">
+                    <span className={`stock-badge ${producto.stock === 0 ? 'agotado' : 'disponible'}`}>
+                      {producto.stock === 0 ? '❌ Agotado' : `✅ ${producto.stock} disponibles`}
+                    </span>
+                  </div>
+
                   {/* Vendedor */}
                   <p className="producto-vendedor">
                     Por: {producto.emprendimiento?.usuario?.nombres} {producto.emprendimiento?.usuario?.apellidos}
@@ -323,13 +395,17 @@ const Productos = () => {
                     <span className="producto-precio">
                       {formatPrice(producto.precio)}
                     </span>
-                    <button className="comprar-btn">
+                    <button 
+                      className={`comprar-btn ${producto.stock === 0 ? 'agotado' : ''}`}
+                      onClick={() => handleComprar(producto)}
+                      disabled={producto.stock === 0}
+                    >
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <circle cx="9" cy="21" r="1"/>
                         <circle cx="20" cy="21" r="1"/>
                         <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
                       </svg>
-                      Comprar
+                      {producto.stock === 0 ? 'Agotado' : 'Comprar'}
                     </button>
                   </div>
                 </div>

@@ -36,13 +36,15 @@ export const obtenerProductosEmprendimiento = async (req, res) => {
 };
 
 // Crear nuevo producto
+// Crear nuevo producto
 export const crearProducto = async (req, res) => {
   try {
     const {
       idemprendimiento,
       nombre,
       descripcion,
-      precio
+      precio,
+      stock = 0  // 👈 Agregar stock con valor por defecto
     } = req.body;
 
     console.log('Creando producto:', req.body);
@@ -59,6 +61,13 @@ export const crearProducto = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: 'El precio no puede ser negativo'
+      });
+    }
+
+    if (stock < 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'El stock no puede ser negativo'
       });
     }
 
@@ -91,7 +100,8 @@ export const crearProducto = async (req, res) => {
           idemprendimiento: parseInt(idemprendimiento),
           nombre: nombre.trim(),
           descripcion: descripcion?.trim() || null,
-          precio: parseFloat(precio)
+          precio: parseFloat(precio),
+          stock: parseInt(stock)  // 👈 Incluir stock
         }
       ])
       .select('*');
@@ -120,6 +130,7 @@ export const crearProducto = async (req, res) => {
 };
 
 // Obtener todos los productos (para catálogo)
+// Obtener todos los productos (para catálogo)
 export const obtenerTodosProductos = async (req, res) => {
   try {
     const { data: productos, error } = await supabase
@@ -130,6 +141,7 @@ export const obtenerTodosProductos = async (req, res) => {
           nombre,
           descripcion,
           estado,
+          categoria:idcategoria (nombre),
           usuario:idusuario (nombres, apellidos)
         )
       `)
@@ -148,6 +160,52 @@ export const obtenerTodosProductos = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error al obtener productos',
+      error: error.message
+    });
+  }
+};
+// Actualizar stock de producto
+export const actualizarStock = async (req, res) => {
+  try {
+    const { idproducto } = req.params;
+    const { stock } = req.body;
+
+    console.log('Actualizando stock:', { idproducto, stock });
+
+    // Validaciones
+    if (stock < 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'El stock no puede ser negativo'
+      });
+    }
+
+    const { data: productoActualizado, error } = await supabase
+      .from('producto')
+      .update({ stock: parseInt(stock) })
+      .eq('idproducto', idproducto)
+      .select('*');
+
+    if (error) throw error;
+
+    if (!productoActualizado || productoActualizado.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Producto no encontrado'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Stock actualizado correctamente',
+      data: productoActualizado[0]
+    });
+
+  } catch (error) {
+    console.error('Error actualizando stock:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor',
       error: error.message
     });
   }

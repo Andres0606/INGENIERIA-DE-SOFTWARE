@@ -8,6 +8,9 @@ const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showRecargaModal, setShowRecargaModal] = useState(false);
+  const [montoRecarga, setMontoRecarga] = useState('');
+  const [recargando, setRecargando] = useState(false);
   const [userData, setUserData] = useState({
     idusuario: '',
     nombres: '',
@@ -18,7 +21,8 @@ const Profile = () => {
     idtipousuario: '',
     fecharegistro: '',
     tipodocumento: '',
-    numdocumento: ''
+    numdocumento: '',
+    saldo: 0
   });
   
   const [originalData, setOriginalData] = useState({});
@@ -26,10 +30,8 @@ const Profile = () => {
   const [tiposUsuario, setTiposUsuario] = useState([]);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
-  const [activeSection, setActiveSection] = useState('perfil'); // 'perfil' o 'favoritos'
+  const [activeSection, setActiveSection] = useState('perfil');
   const navigate = useNavigate();
-
-  const userDataStored = JSON.parse(sessionStorage.getItem('userData') || '{}');
 
   // Cargar datos del usuario desde sessionStorage
   useEffect(() => {
@@ -47,7 +49,8 @@ const Profile = () => {
           idtipousuario: user.idtipousuario || '',
           fecharegistro: user.fecharegistro || '',
           tipodocumento: user.tipodocumento || '',
-          numdocumento: user.numdocumento || ''
+          numdocumento: user.numdocumento || '',
+          saldo: user.saldo || 0
         };
         
         setUserData(userDataFormatted);
@@ -187,6 +190,66 @@ const Profile = () => {
     alert('Funcionalidad de cambio de contraseña en desarrollo');
   };
 
+  // Función para recargar saldo
+  const handleRecargarSaldo = async () => {
+    if (!montoRecarga || montoRecarga <= 0) {
+      setMessage('Ingresa un monto válido');
+      setMessageType('error');
+      return;
+    }
+
+    try {
+      setRecargando(true);
+      setMessage('');
+
+      const response = await fetch('http://localhost:3000/api/transacciones/recargar', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          idusuario: userData.idusuario,
+          monto: parseFloat(montoRecarga)
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Actualizar saldo en el estado local
+        setUserData(prev => ({
+          ...prev,
+          saldo: data.data.saldo
+        }));
+
+        // Actualizar sessionStorage
+        const updatedUserData = {
+          ...JSON.parse(sessionStorage.getItem('userData')),
+          saldo: data.data.saldo
+        };
+        sessionStorage.setItem('userData', JSON.stringify(updatedUserData));
+
+        setMessage(`✅ ${data.message}`);
+        setMessageType('success');
+        setShowRecargaModal(false);
+        setMontoRecarga('');
+        
+        // Recargar después de 2 segundos
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      } else {
+        throw new Error(data.message);
+      }
+    } catch (error) {
+      console.error('Error recargando saldo:', error);
+      setMessage(`❌ ${error.message}`);
+      setMessageType('error');
+    } finally {
+      setRecargando(false);
+    }
+  };
+
   // Obtener nombre de la carrera
   const getCarreraNombre = () => {
     if (!userData.idcarrera) return 'No especificada';
@@ -213,6 +276,15 @@ const Profile = () => {
     } catch (error) {
       return 'Fecha no disponible';
     }
+  };
+
+  // Formatear saldo
+  const formatSaldo = (saldo) => {
+    return new Intl.NumberFormat('es-CO', {
+      style: 'currency',
+      currency: 'COP',
+      minimumFractionDigits: 0
+    }).format(saldo || 0);
   };
 
   if (loading) {
@@ -254,6 +326,9 @@ const Profile = () => {
               <h1>{userData.nombres} {userData.apellidos}</h1>
               <p className="profile-role">{getTipoUsuarioNombre()}</p>
               <p className="profile-email">{userData.correo}</p>
+              <div className="profile-saldo">
+                <strong>Saldo disponible:</strong> {formatSaldo(userData.saldo)}
+              </div>
             </div>
             {!isEditing && activeSection === 'perfil' && (
               <button className="edit-button" onClick={() => setIsEditing(true)}>
@@ -317,6 +392,22 @@ const Profile = () => {
                 <div className="info-row">
                   <label>Correo Electrónico</label>
                   <span className="readonly-field">{userData.correo}</span>
+                </div>
+
+                <div className="info-row">
+                  <label>Saldo Disponible</label>
+                  <div className="saldo-section">
+                    <span className="saldo-amount">
+                      {formatSaldo(userData.saldo)}
+                    </span>
+                    <button 
+                      className="btn-recargar"
+                      onClick={() => setShowRecargaModal(true)}
+                      type="button"
+                    >
+                      💰 Recargar Saldo
+                    </button>
+                  </div>
                 </div>
 
                 <div className="info-row">
@@ -440,6 +531,86 @@ const Profile = () => {
           )}
         </div>
       </div>
+
+      {/* Modal de Recarga de Saldo */}
+      {showRecargaModal && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <div className="modal-header">
+              <h3>Recargar Saldo</h3>
+              <button 
+                className="close-button"
+                onClick={() => {
+                  setShowRecargaModal(false);
+                  setMontoRecarga('');
+                }}
+                disabled={recargando}
+              >
+                ×
+              </button>
+            </div>
+            
+            <div className="modal-content">
+              <div className="saldo-actual">
+                <strong>Saldo actual:</strong> {formatSaldo(userData.saldo)}
+              </div>
+              
+              <div className="form-group">
+                <label>Monto a recargar *</label>
+                <input
+                  type="number"
+                  value={montoRecarga}
+                  onChange={(e) => setMontoRecarga(e.target.value)}
+                  min="1"
+                  step="1000"
+                  placeholder="Ej: 50000"
+                  className="monto-input"
+                  disabled={recargando}
+                />
+                <small>Mínimo: $1.000</small>
+              </div>
+
+              <div className="suggested-amounts">
+                <p>Montos sugeridos:</p>
+                <div className="amount-buttons">
+                  {[10000, 20000, 50000, 100000].map(monto => (
+                    <button
+                      key={monto}
+                      type="button"
+                      className="amount-btn"
+                      onClick={() => setMontoRecarga(monto)}
+                      disabled={recargando}
+                    >
+                      ${monto.toLocaleString()}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-actions">
+              <button 
+                className="btn-primary"
+                onClick={handleRecargarSaldo}
+                disabled={recargando || !montoRecarga || montoRecarga < 1000}
+              >
+                {recargando ? 'Procesando...' : `Recargar ${formatSaldo(montoRecarga)}`}
+              </button>
+              <button 
+                className="btn-secondary"
+                onClick={() => {
+                  setShowRecargaModal(false);
+                  setMontoRecarga('');
+                }}
+                disabled={recargando}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Footer />
     </>
   );
@@ -588,7 +759,10 @@ const FavoritosSection = ({ userId }) => {
                 <button className="btn-contactar">
                   📧 Contactar
                 </button>
-                <button className="btn-comprar">
+                <button 
+                  className="btn-comprar"
+                  onClick={() => window.location.href = '/productos'}
+                >
                   🛒 Comprar
                 </button>
               </div>
