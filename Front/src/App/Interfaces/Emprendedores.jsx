@@ -20,7 +20,7 @@ const Emprendedores = () => {
   const fetchEmprendedores = async () => {
     try {
       setLoading(true);
-        const response = await fetch('http://localhost:3000/api/emprendimientos/emprendedores');
+      const response = await fetch('http://localhost:3000/api/emprendimientos/emprendedores');
       const data = await response.json();
       
       if (data.success) {
@@ -47,6 +47,64 @@ const Emprendedores = () => {
       console.error('Error cargando categorías:', err);
     }
   };
+
+  // Función para enviar mensaje por WhatsApp
+  const contactarWhatsApp = (emprendedor) => {
+  const telefono = emprendedor.usuario?.telefono;
+  const nombreEmprendedor = `${emprendedor.usuario?.nombres} ${emprendedor.usuario?.apellidos}`;
+  const nombreEmprendimiento = emprendedor.nombre;
+  
+  if (!telefono) {
+    alert('Este emprendedor no tiene número de teléfono registrado');
+    return;
+  }
+
+  // Validar formato básico del teléfono
+  const telefonoValido = /^[\d\s\+\-\(\)\.]{10,15}$/.test(telefono);
+  if (!telefonoValido) {
+    alert('El número de teléfono no tiene un formato válido');
+    return;
+  }
+
+  // Limpiar y formatear el número
+  const telefonoLimpio = telefono
+    .replace(/\s+/g, '')        // Remover espacios
+    .replace(/-/g, '')          // Remover guiones
+    .replace(/\./g, '')         // Remover puntos
+    .replace(/\(/g, '')         // Remover paréntesis izquierdo
+    .replace(/\)/g, '')         // Remover paréntesis derecho
+    .replace(/^\+/, '');        // Remover + inicial si existe
+
+  let telefonoConCodigo;
+
+  // Si el número ya empieza con 57 y tiene 12 dígitos, usarlo tal cual
+  if (/^57\d{10}$/.test(telefonoLimpio)) {
+    telefonoConCodigo = telefonoLimpio;
+  }
+  // Si el número tiene 10 dígitos (sin código de país), agregar 57
+  else if (/^\d{10}$/.test(telefonoLimpio)) {
+    telefonoConCodigo = `57${telefonoLimpio}`;
+  }
+  // Si tiene otro formato, mostrar error
+  else {
+    alert(`Formato de teléfono no reconocido: ${telefono}. Debe ser un número colombiano de 10 dígitos.`);
+    return;
+  }
+
+  // Mensaje predefinido
+  const mensaje = `¡Hola ${nombreEmprendedor}! 👋\n\nMe interesa tu emprendimiento "${nombreEmprendimiento}" que vi en Emprende UCC. Me gustaría obtener más información.`;
+  
+  // Codificar el mensaje para URL
+  const mensajeCodificado = encodeURIComponent(mensaje);
+  
+  // Crear URL de WhatsApp
+  const urlWhatsApp = `https://wa.me/${telefonoConCodigo}?text=${mensajeCodificado}`;
+  
+  console.log('URL de WhatsApp:', urlWhatsApp); // Para debugging
+  
+  // Abrir en nueva pestaña
+  window.open(urlWhatsApp, '_blank');
+};
 
   // Filtrar emprendedores
   const emprendedoresFiltrados = emprendedores.filter(emp => {
@@ -188,12 +246,28 @@ const Emprendedores = () => {
                         </svg>
                         <span>{emprendedor.usuario?.correo}</span>
                       </div>
+                      {emprendedor.usuario?.telefono && (
+                        <div className="card-phone">
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M11 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h6zM7.5 12h1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                          </svg>
+                          <span>{emprendedor.usuario.telefono}</span>
+                        </div>
+                      )}
                     </div>
                     <div className="card-actions">
                       <span className={`card-status ${emprendedor.estado}`}>
                         {emprendedor.estado}
                       </span>
-                      <button className="card-contact-btn">Contactar</button>
+                      <button 
+                        className="card-contact-btn"
+                        onClick={() => contactarWhatsApp(emprendedor)}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style={{ marginRight: '6px' }}>
+                          <path d="M13.5 2.5a6.5 6.5 0 0 1-11.3 4.4L1 15l4.1-1.2A6.5 6.5 0 0 0 13.5 2.5z"/>
+                        </svg>
+                        WhatsApp
+                      </button>
                     </div>
                   </div>
                 </div>

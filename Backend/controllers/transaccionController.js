@@ -264,6 +264,7 @@ export const obtenerHistorial = async (req, res) => {
 // Obtener historial de ventas para emprendedor
 // En transaccionController.js
 // En transaccionController.js
+// Obtener historial de ventas para emprendedor
 export const obtenerHistorialVentas = async (req, res) => {
   try {
     const { idvendedor } = req.params;
@@ -284,7 +285,12 @@ export const obtenerHistorialVentas = async (req, res) => {
       .from('transaccion')
       .select(`
         *,
-        comprador:idcomprador (nombres, apellidos, correo),
+        comprador:idcomprador (
+          nombres, 
+          apellidos, 
+          correo, 
+          telefono 
+        ),
         producto:idproducto (
           nombre,
           precio,
@@ -303,7 +309,7 @@ export const obtenerHistorialVentas = async (req, res) => {
       totalVentas: ventas.length,
       ingresosTotales: ventas.reduce((sum, venta) => sum + parseFloat(venta.monto_total), 0),
       productosVendidos: ventas.reduce((sum, venta) => sum + venta.cantidad, 0),
-      saldoActual: vendedor.saldo || 0  // 👈 Incluir saldo actual
+      saldoActual: vendedor.saldo || 0
     };
 
     res.json({
@@ -311,7 +317,7 @@ export const obtenerHistorialVentas = async (req, res) => {
       data: {
         ventas,
         estadisticas,
-        saldoActual: vendedor.saldo || 0  // 👈 Para que el frontend lo use
+        saldoActual: vendedor.saldo || 0
       }
     });
 
@@ -326,6 +332,8 @@ export const obtenerHistorialVentas = async (req, res) => {
 };
 
 // Obtener historial de compras para usuario
+// Obtener historial de compras para usuario
+// Obtener historial de compras para usuario
 export const obtenerHistorialCompras = async (req, res) => {
   try {
     const { idcomprador } = req.params;
@@ -336,12 +344,17 @@ export const obtenerHistorialCompras = async (req, res) => {
       .from('transaccion')
       .select(`
         *,
-        vendedor:idvendedor (nombres, apellidos, correo),
+        vendedor:idvendedor (
+          nombres, 
+          apellidos, 
+          correo, 
+          telefono
+        ),
         producto:idproducto (
           nombre,
           precio,
           descripcion,
-          emprendimiento:idemprendimiento (nombre, usuario:idusuario (telefono))
+          emprendimiento:idemprendimiento (nombre)
         )
       `)
       .eq('idcomprador', idcomprador)

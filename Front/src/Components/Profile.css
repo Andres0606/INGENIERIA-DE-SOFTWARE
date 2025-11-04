@@ -943,3 +943,90 @@
 .profile-saldo button:hover {
   opacity: 1;
 }
+/* Estilos para los botones de contacto */
+.compra-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+  flex-wrap: wrap;
+}
+
+.btn-whatsapp {
+  display: flex;
+  align-items: center;
+  background-color: #25D366;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-whatsapp:hover {
+  background-color: #128C7E;
+}
+
+.btn-correo {
+  display: flex;
+  align-items: center;
+  background-color: #507a7c;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-correo:hover {
+  background-color: #3a5a5c;
+}
+
+/* Mejorar los detalles de la compra */
+.detail-group {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+
+.detail-group .label {
+  font-weight: 500;
+  color: #666;
+}
+
+.detail-group .value {
+  color: #333;
+}
+
+.detail-group .value.total {
+  font-weight: bold;
+  color: #2c5530;
+}
+
+.estado {
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.estado.completada {
+  background-color: #e8f5e8;
+  color: #2e7d32;
+}
+
+.estado.pendiente {
+  background-color: #fff3e0;
+  color: #f57c00;
+}
+
+.estado.fallida {
+  background-color: #ffebee;
+  color: #c62828;
+}

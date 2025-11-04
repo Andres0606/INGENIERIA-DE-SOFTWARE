@@ -654,3 +654,67 @@
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+/* Estilos para los botones de contacto en ventas */
+.venta-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+  flex-wrap: wrap;
+}
+
+.btn-whatsapp {
+  display: flex;
+  align-items: center;
+  background-color: #25D366;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-whatsapp:hover {
+  background-color: #128C7E;
+}
+
+.btn-correo {
+  display: flex;
+  align-items: center;
+  background-color: #507a7c;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-correo:hover {
+  background-color: #3a5a5c;
+}
+
+/* Mejorar los detalles de la venta */
+.venta-details .detail-group {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+
+.venta-details .label {
+  font-weight: 500;
+  color: #666;
+}
+
+.venta-details .value {
+  color: #333;
+}
+
+.venta-details .value.total {
+  font-weight: bold;
+  color: #2c5530;
+}

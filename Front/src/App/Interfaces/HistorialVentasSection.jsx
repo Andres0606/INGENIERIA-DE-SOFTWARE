@@ -40,6 +40,65 @@ const HistorialVentasSection = ({ userId }) => {
     }
   };
 
+  // Función para contactar por WhatsApp
+  const contactarWhatsApp = (comprador, producto) => {
+    const telefono = comprador.telefono;
+    const nombreComprador = `${comprador.nombres} ${comprador.apellidos}`;
+    const nombreProducto = producto.nombre;
+    
+    if (!telefono) {
+      alert('Este comprador no tiene número de teléfono registrado');
+      return;
+    }
+
+    // Mensaje predefinido para vendedores
+    const mensaje = `¡Hola ${nombreComprador}! 👋\n\nSoy tu vendedor de "${nombreProducto}" en Emprende UCC. Quería agradecerte por tu compra y ver si tienes alguna pregunta sobre el producto.`;
+    
+    // Codificar el mensaje para URL
+    const mensajeCodificado = encodeURIComponent(mensaje);
+    
+    // Formatear número de teléfono y agregar +57
+    const telefonoLimpio = telefono
+      .replace(/\s+/g, '')        // Remover espacios
+      .replace(/-/g, '')          // Remover guiones
+      .replace(/\./g, '')         // Remover puntos
+      .replace(/\(/g, '')         // Remover paréntesis izquierdo
+      .replace(/\)/g, '')         // Remover paréntesis derecho
+      .replace(/^\+?57/, '')      // Remover +57 o 57 si ya está al inicio
+      .replace(/^0/, '');         // Remover 0 inicial si existe
+
+    // Agregar +57 al inicio
+    const telefonoConCodigo = `57${telefonoLimpio}`;
+    
+    // Validar que sea un número válido (solo dígitos, 10 dígitos)
+    if (!/^\d{10}$/.test(telefonoLimpio)) {
+      alert('El número de teléfono no tiene un formato válido. Debe tener 10 dígitos.');
+      return;
+    }
+    
+    console.log('Teléfono formateado:', telefonoConCodigo);
+    
+    // Crear URL de WhatsApp
+    const urlWhatsApp = `https://wa.me/${telefonoConCodigo}?text=${mensajeCodificado}`;
+    
+    // Abrir en nueva pestaña
+    window.open(urlWhatsApp, '_blank');
+  };
+
+  // Función para contactar por correo
+  const contactarCorreo = (comprador, producto) => {
+    const correo = comprador.correo;
+    const nombreComprador = `${comprador.nombres} ${comprador.apellidos}`;
+    const nombreProducto = producto.nombre;
+    
+    const asunto = `Sobre tu compra: ${nombreProducto}`;
+    const cuerpo = `Hola ${nombreComprador},\n\nSoy tu vendedor de "${nombreProducto}" en Emprende UCC. Quería agradecerte por tu compra y ver si tienes alguna pregunta sobre el producto.\n\n¡Gracias por tu confianza!\n\nSaludos cordiales.`;
+    
+    const mailtoLink = `mailto:${correo}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
+    
+    window.location.href = mailtoLink;
+  };
+
   const formatPrice = (price) => {
     return new Intl.NumberFormat('es-CO', {
       style: 'currency',
@@ -185,8 +244,14 @@ const HistorialVentasSection = ({ userId }) => {
                   <span className="label">Comprador:</span>
                   <span className="value">{venta.comprador.nombres} {venta.comprador.apellidos}</span>
                 </div>
+                {venta.comprador.telefono && (
+                  <div className="detail-group">
+                    <span className="label">Teléfono:</span>
+                    <span className="value">+57 {venta.comprador.telefono}</span>
+                  </div>
+                )}
                 <div className="detail-group">
-                  <span className="label">Contacto:</span>
+                  <span className="label">Correo:</span>
                   <span className="value">{venta.comprador.correo}</span>
                 </div>
                 <div className="detail-group">
@@ -202,15 +267,22 @@ const HistorialVentasSection = ({ userId }) => {
               </div>
               
               <div className="venta-actions">
+                {venta.comprador.telefono && (
+                  <button 
+                    className="btn-whatsapp"
+                    onClick={() => contactarWhatsApp(venta.comprador, venta.producto)}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style={{ marginRight: '6px' }}>
+                      <path d="M13.5 2.5a6.5 6.5 0 0 1-11.3 4.4L1 15l4.1-1.2A6.5 6.5 0 0 0 13.5 2.5z"/>
+                    </svg>
+                    WhatsApp
+                  </button>
+                )}
                 <button 
-                  className="btn-contactar-comprador"
-                  onClick={() => {
-                    const mensaje = `Hola ${venta.comprador.nombres}, soy el vendedor de "${venta.producto.nombre}". Gracias por tu compra!`;
-                    const contacto = `Correo: ${venta.comprador.correo}`;
-                    alert(`📧 Contactar al comprador:\n\n${contacto}\n\nMensaje sugerido:\n${mensaje}`);
-                  }}
+                  className="btn-correo"
+                  onClick={() => contactarCorreo(venta.comprador, venta.producto)}
                 >
-                  📧 Contactar al comprador
+                  📧 Correo
                 </button>
               </div>
             </div>

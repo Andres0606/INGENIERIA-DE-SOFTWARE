@@ -452,3 +452,55 @@
     align-self: center;
   }
 }
+/* Estilos para WhatsApp */
+.card-phone {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #666;
+  margin-top: 4px;
+}
+
+.card-contact-btn {
+  display: flex;
+  align-items: center;
+  background-color: #25D366;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.card-contact-btn:hover {
+  background-color: #128C7E;
+}
+
+.card-contact-btn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+/* Mejorar el footer de la tarjeta */
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: 15px;
+  gap: 10px;
+}
+
+.card-contact-info {
+  flex: 1;
+}
+
+.card-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
