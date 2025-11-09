@@ -14,6 +14,8 @@ const AdminEmprendimientos = () => {
   const [showModal, setShowModal] = useState(false);
   const [selectedEmprendimiento, setSelectedEmprendimiento] = useState(null);
   const [motivoRechazo, setMotivoRechazo] = useState('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false); // Nuevo estado
+  const [emprendimientoToDelete, setEmprendimientoToDelete] = useState(null); // Nuevo estado
   const navigate = useNavigate();
 
   const userData = JSON.parse(sessionStorage.getItem('userData') || '{}');
@@ -148,6 +150,36 @@ const AdminEmprendimientos = () => {
     } catch (error) {
       console.error('Error rechazando emprendimiento:', error);
       setMessage(error.message || 'Error al rechazar emprendimiento');
+      setMessageType('error');
+    }
+  };
+
+  // Abrir modal de eliminación
+  const openDeleteModal = (emprendimiento) => {
+    setEmprendimientoToDelete(emprendimiento);
+    setShowDeleteModal(true);
+  };
+
+  // Eliminar emprendimiento
+  const handleDelete = async () => {
+    try {
+      const response = await fetch(`http://localhost:3000/api/emprendimientos/admin/${emprendimientoToDelete.idemprendimiento}`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setMessage('Emprendimiento eliminado exitosamente');
+        setMessageType('success');
+        setShowDeleteModal(false);
+        loadEmprendimientos(); // Recargar lista
+      } else {
+        throw new Error(data.message || 'Error al eliminar emprendimiento');
+      }
+    } catch (error) {
+      console.error('Error eliminando emprendimiento:', error);
+      setMessage(error.message || 'Error al eliminar emprendimiento');
       setMessageType('error');
     }
   };
@@ -302,12 +334,19 @@ const AdminEmprendimientos = () => {
                       </>
                     )}
                     
-                    {emprendimiento.estado === 'aprobado' && (
-                      <span className="badge-success">Aprobado</span>
-                    )}
-                    
-                    {emprendimiento.estado === 'rechazado' && (
-                      <span className="badge-error">Rechazado</span>
+                    {(emprendimiento.estado === 'aprobado' || emprendimiento.estado === 'rechazado') && (
+                      <>
+                        <span className={`badge ${emprendimiento.estado === 'aprobado' ? 'badge-success' : 'badge-error'}`}>
+                          {emprendimiento.estado === 'aprobado' ? 'Aprobado' : 'Rechazado'}
+                        </span>
+                        <button 
+                          className="btn-eliminar-admin"
+                          onClick={() => openDeleteModal(emprendimiento)}
+                          title="Eliminar emprendimiento"
+                        >
+                          🗑️ Eliminar
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
@@ -357,6 +396,51 @@ const AdminEmprendimientos = () => {
               <button 
                 className="btn-cancel"
                 onClick={() => setShowModal(false)}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Eliminación */}
+      {showDeleteModal && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <div className="modal-header">
+              <h3>Eliminar Emprendimiento</h3>
+              <button 
+                className="close-button"
+                onClick={() => setShowDeleteModal(false)}
+              >
+                ×
+              </button>
+            </div>
+            <div className="modal-content">
+              <p>
+                ¿Estás seguro de que quieres eliminar el emprendimiento: 
+                <strong> "{emprendimientoToDelete?.nombre}"</strong>?
+              </p>
+              <p className="warning-text">
+                ⚠️ Esta acción es irreversible y eliminará todos los productos asociados.
+              </p>
+              <div className="delete-info">
+                <p><strong>Emprendedor:</strong> {emprendimientoToDelete?.usuario?.nombres} {emprendimientoToDelete?.usuario?.apellidos}</p>
+                <p><strong>Estado:</strong> {emprendimientoToDelete?.estado}</p>
+                <p><strong>Categoría:</strong> {getCategoriaNombre(emprendimientoToDelete?.idcategoria)}</p>
+              </div>
+            </div>
+            <div className="modal-actions">
+              <button 
+                className="btn-delete-confirm"
+                onClick={handleDelete}
+              >
+                🗑️ Sí, Eliminar
+              </button>
+              <button 
+                className="btn-cancel"
+                onClick={() => setShowDeleteModal(false)}
               >
                 Cancelar
               </button>

@@ -718,3 +718,108 @@
   font-weight: bold;
   color: #2c5530;
 }
+/* Botones de acción */
+.emprendimiento-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn-edit, .btn-delete, .btn-add-product {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-edit {
+  background-color: #ffc107;
+  color: #000;
+}
+
+.btn-edit:hover:not(:disabled) {
+  background-color: #e0a800;
+}
+
+.btn-delete {
+  background-color: #dc3545;
+  color: white;
+}
+
+.btn-delete:hover:not(:disabled) {
+  background-color: #c82333;
+}
+
+.btn-add-product {
+  background-color: #28a745;
+  color: white;
+}
+
+.btn-add-product:hover:not(:disabled) {
+  background-color: #218838;
+}
+
+.btn-edit:disabled, .btn-delete:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Acciones de producto */
+.producto-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.producto-actions {
+  display: flex;
+  gap: 5px;
+}
+
+.btn-edit-small, .btn-delete-small {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.btn-edit-small:hover {
+  background-color: #fff3cd;
+}
+
+.btn-delete-small:hover {
+  background-color: #f8d7da;
+}
+
+/* Modal de confirmación de eliminación */
+.delete-confirm {
+  text-align: center;
+}
+
+.warning-text {
+  color: #dc3545;
+  font-weight: 500;
+  margin: 10px 0;
+}
+
+.btn-delete-confirm {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-delete-confirm:hover {
+  background-color: #c82333;
+}

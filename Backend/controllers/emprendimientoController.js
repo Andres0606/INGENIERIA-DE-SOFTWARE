@@ -234,3 +234,266 @@ export const obtenerEmprendedores = async (req, res) => {
     });
   }
 };
+// Editar emprendimiento
+export const editarEmprendimiento = async (req, res) => {
+  try {
+    const { idemprendimiento } = req.params;
+    const {
+      nombre,
+      descripcion,
+      idcategoria
+    } = req.body;
+
+    console.log('Editando emprendimiento:', { idemprendimiento, ...req.body });
+
+    // Validaciones
+    if (!nombre || !idcategoria) {
+      return res.status(400).json({
+        success: false,
+        message: 'Nombre y categoría son obligatorios'
+      });
+    }
+
+    // Verificar que el emprendimiento existe
+    const { data: emprendimientoExistente, error: errorVerificacion } = await supabase
+      .from('emprendimiento')
+      .select('*')
+      .eq('idemprendimiento', idemprendimiento)
+      .single();
+
+    if (errorVerificacion || !emprendimientoExistente) {
+      return res.status(404).json({
+        success: false,
+        message: 'Emprendimiento no encontrado'
+      });
+    }
+
+    // Verificar si el nuevo nombre ya existe (excluyendo el actual)
+    const { data: nombreExistente, error: errorNombre } = await supabase
+      .from('emprendimiento')
+      .select('idemprendimiento')
+      .eq('nombre', nombre)
+      .neq('idemprendimiento', idemprendimiento)
+      .single();
+
+    if (nombreExistente) {
+      return res.status(409).json({
+        success: false,
+        message: 'Ya existe otro emprendimiento con ese nombre'
+      });
+    }
+
+    // Actualizar emprendimiento
+    const { data: emprendimientoActualizado, error } = await supabase
+      .from('emprendimiento')
+      .update({
+        nombre: nombre.trim(),
+        descripcion: descripcion?.trim() || null,
+        idcategoria: parseInt(idcategoria)
+      })
+      .eq('idemprendimiento', idemprendimiento)
+      .select('*');
+
+    if (error) {
+      console.log('Error al editar emprendimiento:', error);
+      throw error;
+    }
+
+    console.log('Emprendimiento editado exitosamente:', emprendimientoActualizado[0]);
+
+    res.json({
+      success: true,
+      message: 'Emprendimiento actualizado exitosamente',
+      data: emprendimientoActualizado[0]
+    });
+
+  } catch (error) {
+    console.error('Error en editar emprendimiento:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor',
+      error: error.message
+    });
+  }
+};
+// Eliminar emprendimiento
+export const eliminarEmprendimiento = async (req, res) => {
+  try {
+    const { idemprendimiento } = req.params;
+
+    console.log('Eliminando emprendimiento:', idemprendimiento);
+
+    // Verificar que el emprendimiento existe
+    const { data: emprendimiento, error: errorVerificacion } = await supabase
+      .from('emprendimiento')
+      .select('*')
+      .eq('idemprendimiento', idemprendimiento)
+      .single();
+
+    if (errorVerificacion || !emprendimiento) {
+      return res.status(404).json({
+        success: false,
+        message: 'Emprendimiento no encontrado'
+      });
+    }
+
+    // Verificar si tiene productos
+    const { data: productos, error: errorProductos } = await supabase
+      .from('producto')
+      .select('idproducto')
+      .eq('idemprendimiento', idemprendimiento);
+
+    if (errorProductos) throw errorProductos;
+
+    if (productos && productos.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No se puede eliminar un emprendimiento que tiene productos. Elimina los productos primero.'
+      });
+    }
+
+    // Eliminar emprendimiento
+    const { error } = await supabase
+      .from('emprendimiento')
+      .delete()
+      .eq('idemprendimiento', idemprendimiento);
+
+    if (error) throw error;
+
+    console.log('Emprendimiento eliminado exitosamente');
+
+    res.json({
+      success: true,
+      message: 'Emprendimiento eliminado exitosamente'
+    });
+
+  } catch (error) {
+    console.error('Error en eliminar emprendimiento:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor',
+      error: error.message
+    });
+  }
+};
+// Eliminar emprendimiento (admin - con eliminación en cascada)
+// Eliminar emprendimiento (admin - versión segura con manejo de errores)
+export const eliminarEmprendimientoAdmin = async (req, res) => {
+  try {
+    const { idemprendimiento } = req.params;
+
+    console.log('Admin eliminando emprendimiento:', idemprendimiento);
+
+    // Verificar que el emprendimiento existe
+    const { data: emprendimiento, error: errorVerificacion } = await supabase
+      .from('emprendimiento')
+      .select('*')
+      .eq('idemprendimiento', idemprendimiento)
+      .single();
+
+    if (errorVerificacion || !emprendimiento) {
+      return res.status(404).json({
+        success: false,
+        message: 'Emprendimiento no encontrado'
+      });
+    }
+
+    // Obtener todos los productos primero
+    const { data: productos, error: errorObtenerProductos } = await supabase
+      .from('producto')
+      .select('idproducto')
+      .eq('idemprendimiento', idemprendimiento);
+
+    if (errorObtenerProductos) throw errorObtenerProductos;
+
+    const productosIds = productos?.map(p => p.idproducto) || [];
+
+    console.log(`Encontrados ${productosIds.length} productos para eliminar`);
+
+    // Función para eliminar de una tabla de manera segura
+    const eliminarDeTabla = async (tabla, campo, valores, nombreTabla) => {
+      if (!valores || valores.length === 0) {
+        console.log(`⏭️  No hay datos para eliminar de ${nombreTabla}`);
+        return;
+      }
+
+      try {
+        const { error } = await supabase
+          .from(tabla)
+          .delete()
+          .in(campo, valores);
+
+        if (error) {
+          // Si es error de foreign key, intentamos eliminar uno por uno
+          if (error.code === '23503') {
+            console.log(`⚠️  Error de FK en ${nombreTabla}, eliminando uno por uno...`);
+            
+            for (const valor of valores) {
+              const { error: errorIndividual } = await supabase
+                .from(tabla)
+                .delete()
+                .eq(campo, valor);
+
+              if (errorIndividual) {
+                console.log(`❌ Error eliminando ${nombreTabla} para ${campo}=${valor}:`, errorIndividual.message);
+              }
+            }
+          } else {
+            throw error;
+          }
+        } else {
+          console.log(`✅ ${nombreTabla} eliminado`);
+        }
+      } catch (error) {
+        console.log(`⚠️  Error no crítico en ${nombreTabla}:`, error.message);
+      }
+    };
+
+    // ELIMINAR EN ORDEN CORRECTO
+
+    // 1. Eliminar favoritos de productos
+    await eliminarDeTabla('favorito_producto', 'idproducto', productosIds, 'favorito_producto');
+
+    // 2. Eliminar calificaciones
+    await eliminarDeTabla('calificacion', 'idproducto', productosIds, 'calificacion');
+
+    // 3. Eliminar transacciones
+    await eliminarDeTabla('transaccion', 'idproducto', productosIds, 'transaccion');
+
+    // 4. Eliminar productos
+    await eliminarDeTabla('producto', 'idemprendimiento', [idemprendimiento], 'producto');
+
+    // 5. Eliminar favoritos del emprendimiento
+    await eliminarDeTabla('favorito', 'idemprendimiento', [idemprendimiento], 'favorito');
+
+    // 6. Eliminar seguimientos
+    await eliminarDeTabla('seguimiento', 'idemprendimiento', [idemprendimiento], 'seguimiento');
+
+    // 7. Finalmente eliminar el emprendimiento
+    const { error: errorFinal } = await supabase
+      .from('emprendimiento')
+      .delete()
+      .eq('idemprendimiento', idemprendimiento);
+
+    if (errorFinal) throw errorFinal;
+
+    console.log('🎉 Emprendimiento eliminado completamente');
+
+    res.json({
+      success: true,
+      message: 'Emprendimiento eliminado exitosamente con todos sus datos asociados',
+      detalles: {
+        productosEliminados: productosIds.length
+      }
+    });
+
+  } catch (error) {
+    console.error('Error crítico eliminando emprendimiento:', error);
+    res.status(500).json({
+      success: false,
+      message: 'No se pudo eliminar el emprendimiento completamente',
+      error: error.message,
+      sugerencia: 'El emprendimiento puede tener transacciones activas que no se pueden eliminar'
+    });
+  }
+};

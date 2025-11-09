@@ -210,3 +210,147 @@ export const actualizarStock = async (req, res) => {
     });
   }
 };
+// Editar producto
+export const editarProducto = async (req, res) => {
+  try {
+    const { idproducto } = req.params;
+    const {
+      nombre,
+      descripcion,
+      precio,
+      stock
+    } = req.body;
+
+    console.log('Editando producto:', { idproducto, ...req.body });
+
+    // Validaciones
+    if (!nombre || !precio) {
+      return res.status(400).json({
+        success: false,
+        message: 'Nombre y precio son obligatorios'
+      });
+    }
+
+    if (precio < 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'El precio no puede ser negativo'
+      });
+    }
+
+    if (stock < 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'El stock no puede ser negativo'
+      });
+    }
+
+    // Verificar que el producto existe
+    const { data: productoExistente, error: errorVerificacion } = await supabase
+      .from('producto')
+      .select('*')
+      .eq('idproducto', idproducto)
+      .single();
+
+    if (errorVerificacion || !productoExistente) {
+      return res.status(404).json({
+        success: false,
+        message: 'Producto no encontrado'
+      });
+    }
+
+    // Actualizar producto
+    const { data: productoActualizado, error } = await supabase
+      .from('producto')
+      .update({
+        nombre: nombre.trim(),
+        descripcion: descripcion?.trim() || null,
+        precio: parseFloat(precio),
+        stock: parseInt(stock)
+      })
+      .eq('idproducto', idproducto)
+      .select('*');
+
+    if (error) {
+      console.log('Error al editar producto:', error);
+      throw error;
+    }
+
+    console.log('Producto editado exitosamente:', productoActualizado[0]);
+
+    res.json({
+      success: true,
+      message: 'Producto actualizado exitosamente',
+      data: productoActualizado[0]
+    });
+
+  } catch (error) {
+    console.error('Error en editar producto:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor',
+      error: error.message
+    });
+  }
+};
+
+// Eliminar producto
+export const eliminarProducto = async (req, res) => {
+  try {
+    const { idproducto } = req.params;
+
+    console.log('Eliminando producto:', idproducto);
+
+    // Verificar que el producto existe
+    const { data: producto, error: errorVerificacion } = await supabase
+      .from('producto')
+      .select('*')
+      .eq('idproducto', idproducto)
+      .single();
+
+    if (errorVerificacion || !producto) {
+      return res.status(404).json({
+        success: false,
+        message: 'Producto no encontrado'
+      });
+    }
+
+    // Verificar si hay transacciones asociadas
+    const { data: transacciones, error: errorTransacciones } = await supabase
+      .from('transaccion')
+      .select('idtransaccion')
+      .eq('idproducto', idproducto);
+
+    if (errorTransacciones) throw errorTransacciones;
+
+    if (transacciones && transacciones.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No se puede eliminar un producto que tiene transacciones asociadas'
+      });
+    }
+
+    // Eliminar producto
+    const { error } = await supabase
+      .from('producto')
+      .delete()
+      .eq('idproducto', idproducto);
+
+    if (error) throw error;
+
+    console.log('Producto eliminado exitosamente');
+
+    res.json({
+      success: true,
+      message: 'Producto eliminado exitosamente'
+    });
+
+  } catch (error) {
+    console.error('Error en eliminar producto:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor',
+      error: error.message
+    });
+  }
+};
